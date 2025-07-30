@@ -1,0 +1,5 @@
+.vscode/
+.DS_Store
+
+secrets.jl
+tests/signals.jl
