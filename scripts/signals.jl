@@ -47,9 +47,6 @@ function script()
 
         df_participants = read_dataframe(db, "participants")
 
-        # all current participant uuids
-        participantuuids = df_participants.InteractionDesignerParticipantUUID
-
         # download data for the previous day, 100 participants at a time
         chunks = chunk(length(participantuuids), 100)
 
@@ -199,7 +196,7 @@ function script()
             send_signals_email(EMAIL_CREDENTIALS, EMAIL_SIGNALS_RECEIVER, _)
         end
 
-        upload_signals(df_signals, REDCAP_API_TOKEN_1308, SIGNALS)
+        upload_redcap_signals(df_signals, REDCAP_API_TOKEN_1308, SIGNALS)
     end
 end
 
