@@ -149,7 +149,7 @@ function missing_intense_sampling(df, cutoff)
             "Partner B05/C03 Mindfulness", "Partner B05/C03 PSAT"]
             alarm = isalarm(
                 (x, y, i) -> x[i] isa Vector &&
-                                 length(x[i]) == 4 &&
+                                 length(x[i]) in [2, 4] &&
                                  all(ismissing, replace(x[i], typemax(Int32) => missing)) &&
                                  ismissing(y[i]),
                 df, [:SocialInteractions, :SocialContact], cutoff, 2
