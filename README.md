@@ -41,11 +41,11 @@ nano secrets.jl
 The following package manager commands must be executed from the project directory to install the required packages.
 
 ```julia
-] activate .
+activate .
 ```
 
 ```julia
-] instantiate
+instantiate
 ```
 
 Scripts can then be tested from the terminal, and the setup script must also be executed.
@@ -59,16 +59,17 @@ julia --project tests/email.jl
 julia --project scripts/setup.jl
 ```
 
-To have the script run automatically at a specific time, a corresponding entry must be made in the crontab configuration file. This is opened or created with the following command.
+To have the scripts run automatically at a specific time, a corresponding entry must be made in the crontab configuration file. This is opened or created with the following command.
 
 ```terminal
 crontab -e
 ```
 
-The following line runs the script daily at 5:30 am.
+The following line runs the scripts daily at 5:30 am and 7:00 am respectively.
 
 ```plain
 30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl'
+0 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl'
 ```
 
 ## Acknowledgements
