@@ -1,7 +1,9 @@
 
 chunk(N, size) = [((i - 1) * size + 1):min(i * size, N) for i in 1:ceil(Int, N / size)]
 
-cutofftime(x = now()) = string(floor(x, Day) + Hour(5) + Minute(30)) * "Z"
+function make_cutoff(; x = now(), hour = 5, minute = 30)
+    string(floor(x, Day) + Hour(hour) + Minute(minute)) * "Z"
+end
 
 fill_down(x) = accumulate((a, b) -> coalesce(b, a), x; init = coalesce(x...))
 
@@ -135,3 +137,39 @@ print_signals(df, signals) = print(signals_to_strings(df, signals)...)
 camel2snakecase(x) = join(lowercase.(split(string(x), r"(?=[A-Z])")), "_")
 
 snake2camelcase(x) = join(uppercasefirst.(split(x, "_")))
+
+function make_feedback_strings(data, df_participants, city)
+    feedback = String[]
+
+    for participant in data["participants"]
+        id = participant["pseudonym"]
+        index = findfirst(isequal(id), df_participants.Participant)
+        group = df_participants.InteractionDesignerGroup[index]
+
+        alarms = 0
+        items = 0
+
+        for (_, dict) in participant["variableValues"]
+            entries = @chain dict begin
+                getindex("values")
+                filter(x -> !isnothing(x["value"]), _)
+                length
+            end
+
+            items += entries
+
+            if dict["displayName"] == "event_negative"
+                alarms = entries
+            end
+        end
+
+        s = """$id ($city, $group)
+        Number of B01 alarms responded to: $alarms
+        Number of completed B01 items: $items
+        """
+
+        push!(feedback, s)
+    end
+
+    return feedback
+end

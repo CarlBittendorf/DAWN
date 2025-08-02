@@ -52,13 +52,15 @@ function script()
 
         df = @chain begin
             vcat((
-                download_interaction_designer_variable_values(
-                    token,
-                    studyuuid,
-                    participantuuids[range],
-                    INTERACTION_DESIGNER_VARIABLES;
-                    hoursinpast = 24
-                )
+                @chain token begin
+                    download_interaction_designer_variable_values(
+                        token,
+                        studyuuid,
+                        participantuuids[range],
+                        getfield.(INTERACTION_DESIGNER_VARIABLES, :uuid)
+                    )
+                    variable_values_to_dataframe(INTERACTION_DESIGNER_VARIABLES)
+                end
             for range in chunks
             )...)
 
@@ -193,7 +195,7 @@ function script()
             transform(All() => ((x...) -> city) => :City)
             signals_to_strings(SIGNALS)
 
-            send_signals_email(EMAIL_CREDENTIALS, EMAIL_SIGNALS_RECEIVER, _)
+            send_signals_email(EMAIL_CREDENTIALS, EMAIL_SIGNALS_RECEIVERS, _)
         end
 
         upload_redcap_signals(df_signals, REDCAP_API_TOKEN_1308, SIGNALS)

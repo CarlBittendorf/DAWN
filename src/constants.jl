@@ -76,6 +76,32 @@ const DATABASE_VARIABLES = [
     "ExerciseSuccessful"
 ]
 
+const B01_INTENSE_SAMPLING_VARIABLE_UUIDS = [
+    "7b2c3197-8090-48a9-bff1-b0d9301b5bc6",
+    "9a515c37-79d7-408e-a168-eaec70fd0a6c",
+    "635a5137-8f9f-41d9-aaca-668119f80e40",
+    "134d9cd8-9e22-482e-9fd1-40f2e44b34cd",
+    "8ff830c0-39be-480f-8a2c-4da9c24b370d",
+    "254ecf51-a49c-460f-9400-3480373ce7dc",
+    "0a60dedf-b5fe-4fc9-9471-f46c939f56d9",
+    "4ab049dd-50d1-4390-8fde-f9c475c3b5e6",
+    "b2508b69-7e41-470d-90d8-53b4c2444719",
+    "d360e579-1bcc-4a63-b444-f00d88208616",
+    "e183fde1-c830-4776-91e4-73c486e32c3f",
+    "cb13be7e-f016-4ab4-ac7c-ea2bdb346a4b",
+    "19fdbaee-39cb-4be3-8d04-27635b1bb910",
+    "e784d883-495f-4960-92de-160129a0c507",
+    "9554d28f-047a-49f4-8b8f-7de6bb34a644",
+    "fe104a9e-93a7-48f4-ab18-0952c244a617",
+    "0aca7aa1-2de3-44a6-98bb-1791f5011deb",
+    "f14209b0-c8f7-42c5-9ceb-01bdd5cac524",
+    "59ef3edd-2544-4a7c-a24b-4a5bee3db76e",
+    "11bdb38c-b2d7-401c-92ea-c9ddc1ca1b4d",
+    "445189d5-d0ae-48d9-8cad-e7837691f91c",
+    "673d1774-08ef-4ee3-afc5-8e7ff9921a5b",
+    "f61c8c6d-0a7a-4b35-ba35-c1e7330734c7"
+]
+
 const SIGNALS = [
     Signal(
         initial,

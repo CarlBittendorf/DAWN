@@ -74,7 +74,7 @@ end
 
 function make_paragraph(text)
     p(
-        style = "font-family: Roboto, sans-serif; text-align: left; font-size: 18px; font-weight: 300; line-height: 1.4;",
+        style = "font-family: Roboto, sans-serif; text-align: left; font-size: 18px; font-weight: 300; line-height: 1.4; white-space: pre-line;",
         text
     )
 end
@@ -169,6 +169,17 @@ function make_signals_html(signals)
     )
 end
 
+function make_feedback_html(feedback)
+    make_html(
+        "Feedback",
+        [
+            make_title("Feedback"),
+            make_paragraph("Attention! The following information may be inaccurate for technical reasons.\n"),
+            [make_paragraph(x) for x in feedback]...
+        ]
+    )
+end
+
 function send_email(credentials, receivers, subject, html)
     py"send_email"(credentials.server, credentials.login, credentials.password,
         credentials.sender, receivers, subject, html)
@@ -177,7 +188,7 @@ end
 function send_error_email(credentials, receivers, message, filename)
     html = make_error_html(message, filename)
 
-    send_email(credentials, receivers, "DAWN Error Message", html)
+    send_email(credentials, receivers, "CRC393 Error Message", html)
 
     @info "Sent error email."
 end
@@ -185,7 +196,15 @@ end
 function send_signals_email(credentials, receivers, signals)
     html = make_signals_html(signals)
 
-    send_email(credentials, receivers, "DAWN Signals", html)
+    send_email(credentials, receivers, "CRC393 Signals", html)
 
     @info "Sent signals email."
+end
+
+function send_feedback_email(credentials, receivers, feedback)
+    html = make_feedback_html(feedback)
+
+    send_email(credentials, receivers, "CRC393 Feedback", html)
+
+    @info "Sent feedback email."
 end

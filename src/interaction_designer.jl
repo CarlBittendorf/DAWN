@@ -186,25 +186,28 @@ function variable_values_to_dataframe(data, variables)
 end
 
 function download_interaction_designer_variable_values(
-        token, studyuuid, participantuuids, variables; hoursinpast = 24)
-    @chain begin
-        interaction_designer_api_request(
-            "POST", "https://id.movisens.com/api/export/studies/" * studyuuid *
-                    "/variable-values";
-            body = JSON.json(
-                Dict(
-                "participants" => participantuuids,
-                "variables" => getfield.(variables, :uuid)
-            )
-            ),
-            headers = [
-                "Content-Type" => "application/json",
-                "Authorization" => "Bearer " * token
-            ],
-            query = ["cutoffTime" => cutofftime(), "hoursInPast" => string(hoursinpast)]
+        token,
+        studyuuid,
+        participantuuids,
+        variableuuids;
+        cutofftime = make_cutoff(),
+        hoursinpast = 24
+)
+    interaction_designer_api_request(
+        "POST", "https://id.movisens.com/api/export/studies/" * studyuuid *
+                "/variable-values";
+        body = JSON.json(
+            Dict(
+            "participants" => participantuuids,
+            "variables" => variableuuids
         )
-        variable_values_to_dataframe(variables)
-    end
+        ),
+        headers = [
+            "Content-Type" => "application/json",
+            "Authorization" => "Bearer " * token
+        ],
+        query = ["cutoffTime" => cutofftime, "hoursInPast" => string(hoursinpast)]
+    )
 end
 
 function download_interaction_designer_dataframe(
