@@ -122,8 +122,6 @@ function signals_to_strings(df, signals)
                     s *= string(variable) * ": " * string(df[i, variable]) * "\n"
                 end
 
-                s *= "\n"
-
                 push!(strings, s)
             end
         end
