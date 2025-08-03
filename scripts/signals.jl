@@ -54,7 +54,6 @@ function script()
             vcat((
                 @chain token begin
                     download_interaction_designer_variable_values(
-                        token,
                         studyuuid,
                         participantuuids[range],
                         getfield.(INTERACTION_DESIGNER_VARIABLES, :uuid)
