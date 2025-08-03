@@ -6,7 +6,7 @@
 
 *DAWN* (Daily Assessment of Warnings and Notifications) is a software system within the framework of [CRC393](https://www.uni-marburg.de/en/trr-393), a large-scale research initiative funded by the German Research Foundation (DFG) that focuses on affective disorders such as depression and bipolar disorder. These are mental health conditions that affect a person’s mood and emotions, often in serious and long-lasting ways. The goal is to understand how and why symptoms of these disorders change over time — why some people get better, others relapse, and some experience chronic problems. To this end, 1,500 people (both patients and healthy individuals) will be followed over two years and examined using mobile apps, brain scans, and biological samples to monitor changes in real life. An important goal is to detect upcoming manic and depressive episodes in real-time using adaptive sampling strategies, which allows patients to be examined, for example, using medical imaging techniques while the episode is developing.
 
-And that's where DAWN comes into play: Every day early in the morning (during dawn, so to speak), it collects data from mobile apps (e-diaries from [InteractionDesigner](https://www.movisens.com/en/products/interactiondesigner/) and passive sensing data from [movisensXS](https://www.movisens.com/en/products/movisensxs/)) and analyzes them for the presence of early warning signals. Detected signals are forwarded to a research database, which in turn notifies staff at the study centers in Marburg, Münster and Dresden to contact the relevant patients. DAWN not only detects upcoming episodes (so-called inflection signals), but also, for example, remission of an episode, whether a patient is having problems with the mobile apps, or frequently fails to answer their e-diary questions. The data is currently being checked for a total of 18 different signals.
+And that's where DAWN comes into play: Every day early in the morning (during dawn, so to speak), it collects data from mobile apps (e-diaries from [InteractionDesigner](https://www.movisens.com/en/products/interactiondesigner/) and passive sensing data from [movisensXS](https://www.movisens.com/en/products/movisensxs/)) and analyzes them for the presence of early warning signals. Detected signals are forwarded to a research database, which in turn notifies staff at the study centers in Marburg, Münster and Dresden to contact the relevant patients. DAWN not only detects upcoming episodes (so-called inflection signals), but also, for example, remission of an episode, whether a patient is having problems with the mobile apps, or frequently fails to answer their e-diary questions. The data is currently being checked for a total of 18 different signals. In addition, DAWN provides feedback to staff on how many questionnaires patients have responded to and how many items they have completed in total.
 
 ## Setup
 
@@ -65,12 +65,20 @@ To have the scripts run automatically at a specific time, a corresponding entry 
 crontab -e
 ```
 
-The following line runs the scripts daily at 5:30 am and 7:00 am respectively.
+The following lines run the scripts daily at 5:30 am and 7:00 am respectively.
 
 ```plain
 30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl'
 0 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl'
 ```
+
+To update to the latest version of DAWN, run
+
+```terminal
+git pull
+```
+
+in the project directory.
 
 ## Acknowledgements
 
