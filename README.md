@@ -65,11 +65,15 @@ To have the scripts run automatically at a specific time, a corresponding entry 
 crontab -e
 ```
 
-The following lines run the scripts daily at 5:30 am and 7:00 am respectively.
+The following lines run the scripts daily at 5:30 am, 5:35 am, 5:40 am, 7:30 am, 7:35 am and 7:40 am respectively.
 
 ```plain
-30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl'
-0 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl'
+30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 1'
+35 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 2'
+40 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 3'
+30 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 1'
+35 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 2'
+40 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 3'
 ```
 
 To update to the latest version of DAWN, run
