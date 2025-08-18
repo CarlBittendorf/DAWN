@@ -162,7 +162,8 @@ const SIGNALS = [
     ),
     Signal(
         missing_intense_sampling,
-        ["B01", "C01 Cognition", "C01 Emotion"],
+        ["B01", "C01 Cognition", "C01 Emotion", "B05/C03 Mindfulness",
+            "B05/C03 PSAT", "Partner B05/C03 Mindfulness", "Partner B05/C03 PSAT"],
         [:MissingIntenseSampling, :MissingIntenseSamplingDate]
     ),
     Signal(

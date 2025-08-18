@@ -142,7 +142,8 @@ function missing_intense_sampling(df, cutoff)
         if group in ["B01", "C01 Cognition", "C01 Emotion"]
             alarm = isalarm(
                 (x, i) -> x[i] isa Vector &&
-                    all(ismissing, replace(x[i], typemax(Int32) => missing)),
+                              length(x[i]) == 5 &&
+                              all(ismissing, replace(x[i], typemax(Int32) => missing)),
                 df, :EventNegative, cutoff, 2
             )
         elseif group in ["B05/C03 Mindfulness", "B05/C03 PSAT",
