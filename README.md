@@ -52,6 +52,9 @@ Scripts can then be tested from the terminal, and the setup script must also be 
 
 ```terminal
 cd /home/ubuntu/DAWN
+```
+
+```terminal
 julia --project tests/email.jl
 ```
 
