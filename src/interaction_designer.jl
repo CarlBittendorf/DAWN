@@ -56,7 +56,7 @@ function download_interaction_designer_results(token, studyuuid)
         interaction_designer_api_request(
             "POST", "https://id.movisens.com/api/export/studies/" * studyuuid * "/results";
             headers = ["Authorization" => "Bearer " * token],
-            query = ["exportFormat" => "CSV"]
+            query = ["exportFormat" => "CSV", "until" => string(now()) * "Z"]
         )
         getindex("statusId")
     end
