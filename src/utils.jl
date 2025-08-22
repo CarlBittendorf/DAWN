@@ -171,3 +171,29 @@ function make_feedback_strings(data, df_participants, city)
 
     return feedback
 end
+
+function make_compensation_strings(df, df_participants, city)
+    compensation = String[]
+
+    for id in unique(df.Participant)
+        index = findfirst(isequal(id), df_participants.Participant)
+        group = df_participants.InteractionDesignerGroup[index]
+
+        df_participant = subset(df, :Participant => ByRow(isequal(id)))
+
+        s = """$id ($city, $group)
+        S01 compliance
+        """
+
+        for (_, i, c) in eachrow(df_participant)
+            start = (i - 1) * 30 + 1
+            finish = i * 30
+
+            s *= "Days $start-$finish: $c%\n"
+        end
+
+        push!(compensation, s)
+    end
+
+    return compensation
+end
