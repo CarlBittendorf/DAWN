@@ -57,7 +57,7 @@ compensation = @chain db begin
     # and have at least one entry within the last 180 days
     groupby(:Participant)
     subset(
-        :Date => (x -> Dates.value(cutoff - minimum(x)) % 180 >= 160), # == 0
+        :Date => (x -> Dates.value(cutoff - minimum(x)) % 180 == 0),
         :Date => (x -> any(d -> d > cutoff - Day(180), x));
         ungroup = false
     )

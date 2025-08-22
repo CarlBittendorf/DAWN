@@ -46,6 +46,8 @@ function script()
             )
             make_feedback_strings(df_participants, city)
         end
+
+        send_feedback_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_RECEIVERS[city], feedback)
     end
 
     compensation = @chain db begin
@@ -57,7 +59,7 @@ function script()
         # and have at least one entry within the last 180 days
         groupby(:Participant)
         subset(
-            :Date => (x -> Dates.value(cutoff - minimum(x)) % 180 >= 160), # == 0
+            :Date => (x -> Dates.value(cutoff - minimum(x)) % 180 == 0),
             :Date => (x -> any(d -> d > cutoff - Day(180), x));
             ungroup = false
         )
@@ -75,12 +77,9 @@ function script()
         make_compensation_strings(df_participants, city)
     end
 
-    if !isempty(feedback) || !isempty(compensation)
+    if !isempty(compensation)
         send_feedback_email(
-            EMAIL_CREDENTIALS,
-            EMAIL_FEEDBACK_RECEIVERS[city],
-            [feedback..., compensation...]
-        )
+            EMAIL_CREDENTIALS, EMAIL_COMPENSATION_RECEIVERS[city], compensation)
     end
 end
 
