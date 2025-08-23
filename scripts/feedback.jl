@@ -59,12 +59,12 @@ function script()
         # and have at least one entry within the last 180 days
         groupby(:Participant)
         subset(
-            :Date => (x -> Dates.value(cutoff - minimum(x)) % 180 == 0),
+            :Date => (x -> (Dates.value(cutoff - minimum(x)) + 1) % 180 == 0),
             :Date => (x -> any(d -> d > cutoff - Day(180), x));
             ungroup = false
         )
         transform(
-            :Date => (x -> Dates.value.(x .- minimum(x)) .+ 1) => :Day;
+            :Date => (x -> Dates.value.(x .- minimum(x; init = cutoff)) .+ 1) => :Day;
             ungroup = false
         )
         lastdays(180, cutoff)
