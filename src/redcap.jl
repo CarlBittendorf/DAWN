@@ -80,6 +80,27 @@ function download_redcap_diagnoses(token, participants)
     end
 end
 
+function download_redcap_a06(token, participants)
+    @chain token begin
+        redcap_api_request([
+            "records" => join(participants, ","),
+            "fields[0]" => "participant_id",
+            "fields[1]" => "a06_eingeschlossen",
+            "fields[2]" => "a06_finalisiert"
+        ])
+        DataFrame(
+            :Participant => getindex.(_, "participant_id"),
+            :A06Included => getindex.(_, "a06_eingeschlossen"),
+            :A06Finalized => getindex.(_, "a06_finalisiert")
+        )
+        subset(
+            :A06Included => ByRow(isequal("1")),
+            :A06Finalized => ByRow(!isequal("1"))
+        )
+        transform(All() => ByRow((x...) -> true) => :IsA06)
+    end
+end
+
 function upload_redcap_signal(token, participant, signalname, parameters)
     if signalname in ["inflection_depression", "inflection_mania"]
         forms = ["forms[1]" => "inflection_depression", "forms[2]" => "inflection_mania"]

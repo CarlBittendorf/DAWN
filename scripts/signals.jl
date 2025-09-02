@@ -156,6 +156,11 @@ function script()
         )
     end
 
+    df_a06 = @chain REDCAP_API_TOKEN_1401 begin
+        download_redcap_a06(participants)
+        select(:Participant, :IsA06)
+    end
+
     df_data = @chain db begin
         read_dataframe("data")
 
@@ -180,8 +185,9 @@ function script()
             renamecols = false
         )
 
-        # TODO: add A06
-        transform(All() => ByRow((x...) -> false) => :IsA06)
+        # add :IsA06 column
+        leftjoin(df_a06; on = :Participant)
+        transform(:IsA06 => ByRow(!ismissing); renamecols = false)
 
         sort([:Participant, :Date])
     end
