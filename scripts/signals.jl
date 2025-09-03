@@ -156,6 +156,9 @@ function script()
         )
     end
 
+    # workaround to avoid SSL errors
+    sleep(10)
+
     df_a06 = @chain REDCAP_API_TOKEN_1401 begin
         download_redcap_a06(participants)
         select(:Participant, :IsA06)

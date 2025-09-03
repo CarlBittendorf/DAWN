@@ -12,8 +12,7 @@ function redcap_api_request(token, parameters)
         ),
         status_exception = false,
         logerrors = true,
-        retries = 10,
-        require_ssl_verification = false
+        retries = 10
     )
 
     if response.status == 200
