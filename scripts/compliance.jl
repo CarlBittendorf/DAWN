@@ -63,7 +63,8 @@ function script()
     filename = joinpath(folder, "Compliance.png")
 
     figure = draw(
-        data(df) * mapping(:Date, :Compliance; color = :StudyCenter) * visual(Lines);
+        data(sort(df, [:StudyCenter, :Date])) *
+        mapping(:Date, :Compliance; color = :StudyCenter) * visual(Lines);
         axis = (title = "S01 Compliance",)
     )
 
