@@ -180,9 +180,9 @@ function make_feedback_html(feedback)
     )
 end
 
-function send_email(credentials, receivers, subject, html)
+function send_email(credentials, receivers, subject, html, filenames = [])
     py"send_email"(credentials.server, credentials.login, credentials.password,
-        credentials.sender, receivers, subject, html)
+        credentials.sender, receivers, subject, html, filenames)
 end
 
 function send_error_email(credentials, receivers, message, filename)
@@ -207,4 +207,24 @@ function send_feedback_email(credentials, receivers, feedback)
     send_email(credentials, receivers, "CRC393 Feedback", html)
 
     @info "Sent feedback email."
+end
+
+function send_compliance_email(credentials, receivers, filenames)
+    html = make_html(
+        "Compliance",
+        [
+            make_title("Compliance"),
+            make_paragraph("This is the weekly compliance report for CRC393."),
+            span(style = "padding-top: 60px;"),
+            [img(
+                 src = "cid:" * string(i - 1),
+                 style = "max-height: 100%; object-fit: contain; display: block; margin: auto auto;"
+             )
+             for i in eachindex(filenames)]...
+        ]
+    )
+
+    send_email(credentials, receivers, "CRC393 Compliance", html, filenames)
+
+    @info "Sent compliance email."
 end
