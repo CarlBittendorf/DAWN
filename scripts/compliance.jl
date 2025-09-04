@@ -5,67 +5,72 @@ using AlgebraOfGraphics, CairoMakie
 set_aog_theme!()
 
 function script()
-    df = vcat((
-        begin
-            city = sc.name
+    df = @chain begin
+        vcat((
+            begin
+                city = sc.name
 
-            # connection to database
-            db = DuckDB.DB(joinpath("data", city * ".db"))
+                # connection to database
+                db = DuckDB.DB(joinpath("data", city * ".db"))
 
-            df_participants = read_dataframe(db, "participants")
+                df_participants = read_dataframe(db, "participants")
 
-            # interaction designer ids
-            participants = unique(df_participants.Participant)
+                # interaction designer ids
+                participants = unique(df_participants.Participant)
 
-            df_participants = @chain REDCAP_API_TOKEN_1376 begin
-                download_redcap_participants(participants)
+                df_participants = @chain REDCAP_API_TOKEN_1376 begin
+                    download_redcap_participants(participants)
 
-                # consider only the most recent entry for each participant
-                groupby(:Participant)
-                subset(:Instance => (x -> x .== maximum(x)))
+                    # consider only the most recent entry for each participant
+                    groupby(:Participant)
+                    subset(:Instance => (x -> x .== maximum(x)))
 
-                rightjoin(df_participants; on = :Participant)
+                    rightjoin(df_participants; on = :Participant)
 
-                transform(:LocationDresden => ByRow(x -> ismissing(x) ? city : "Dresden ($x)") => :StudyCenter)
+                    transform(:LocationDresden => ByRow(x -> ismissing(x) ? city : "Dresden ($x)") => :StudyCenter)
+                end
+
+                @chain db begin
+                    read_dataframe("data")
+
+                    leftjoin(df_participants; on = :Participant)
+
+                    subset(
+                        :InteractionDesignerGroup => ByRow(x -> x in ["S01", "B01",
+                            "C01 Cognition", "C01 Emotion", "B05/C03 Mindfulness", "B05/C03 PSAT"]),
+
+                        # remove test accounts
+                        :Participant => ByRow(x -> !(x in [
+                            "TK_test", "test", "TESTB01", "TEST9999", "test_b05_1", "test_b05_2"]))
+                    )
+                    transform(
+                        :Date => ByRow(x -> floor(x, Week));
+                        renamecols = false
+                    )
+                    dropmissing(:StudyCenter)
+                    subset(:StudyCenter => ByRow(!isequal("Dresden")))
+
+                    groupby([:StudyCenter, :Date])
+                    combine(
+                        nrow => :Total,
+                        :ChronoRecord => (x -> count(ismissing, x)) => :Missing
+                    )
+
+                    transform([:Total, :Missing] => ByRow((t, m) -> (t - m) / t * 100) => :Compliance)
+                end
             end
+        for sc in STUDY_CENTERS
+        )...)
 
-            @chain db begin
-                read_dataframe("data")
-
-                leftjoin(df_participants; on = :Participant)
-
-                subset(
-                    :InteractionDesignerGroup => ByRow(x -> x in ["S01", "B01",
-                        "C01 Cognition", "C01 Emotion", "B05/C03 Mindfulness", "B05/C03 PSAT"]),
-
-                    # remove test accounts
-                    :Participant => ByRow(x -> !(x in [
-                        "TK_test", "test", "TESTB01", "TEST9999", "test_b05_1", "test_b05_2"]))
-                )
-                transform(
-                    :Date => ByRow(x -> floor(x, Week));
-                    renamecols = false
-                )
-                dropmissing(:StudyCenter)
-                subset(:StudyCenter => ByRow(!isequal("Dresden")))
-
-                groupby([:StudyCenter, :Date])
-                combine(
-                    nrow => :Total,
-                    :ChronoRecord => (x -> count(ismissing, x)) => :Missing
-                )
-
-                transform([:Total, :Missing] => ByRow((t, m) -> (t - m) / t * 100) => :Compliance)
-            end
-        end
-    for sc in STUDY_CENTERS
-    )...)
+        subset(:Date => ByRow(x -> x >= Date("2025-07-21")))
+        sort([:StudyCenter, :Date])
+    end
 
     folder = mktempdir()
     filename = joinpath(folder, "Compliance.png")
 
     figure = draw(
-        data(sort(df, [:StudyCenter, :Date])) *
+        data(df) *
         mapping(:Date, :Compliance => "Compliance [%]";
             color = :StudyCenter => "Study Center") *
         visual(Lines);
