@@ -27,7 +27,6 @@ function script()
                 rightjoin(df_participants; on = :Participant)
 
                 transform(:LocationDresden => ByRow(x -> ismissing(x) ? city : "Dresden ($x)") => :StudyCenter)
-                subset(:StudyCenter => ByRow(!isequal("Dresden")))
             end
 
             @chain db begin
@@ -47,6 +46,8 @@ function script()
                     :Date => ByRow(x -> floor(x, Week));
                     renamecols = false
                 )
+                dropmissing(:StudyCenter)
+                subset(:StudyCenter => ByRow(!isequal("Dresden")))
 
                 groupby([:StudyCenter, :Date])
                 combine(
