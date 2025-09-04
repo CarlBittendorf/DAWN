@@ -27,6 +27,7 @@ function script()
                 rightjoin(df_participants; on = :Participant)
 
                 transform(:LocationDresden => ByRow(x -> ismissing(x) ? city : "Dresden ($x)") => :StudyCenter)
+                subset(:StudyCenter => ByRow(!isequal("Dresden")))
             end
 
             @chain db begin
@@ -64,7 +65,9 @@ function script()
 
     figure = draw(
         data(sort(df, [:StudyCenter, :Date])) *
-        mapping(:Date, :Compliance; color = :StudyCenter) * visual(Lines);
+        mapping(:Date, :Compliance => "Compliance [%]";
+            color = :StudyCenter => "Study Center") *
+        visual(Lines);
         axis = (title = "S01 Compliance",)
     )
 
