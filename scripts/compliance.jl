@@ -70,11 +70,15 @@ function script()
     filename = joinpath(folder, "Compliance.png")
 
     figure = draw(
+        mapping([70]) * visual(HLines; linestyle = :dash) +
         data(df) *
-        mapping(:Date, :Compliance => "Compliance [%]";
-            color = :StudyCenter => "Study Center") *
+        mapping(
+            :Date,
+            :Compliance => "Compliance [%]";
+            color = :StudyCenter => "Study Center"
+        ) *
         visual(Lines);
-        axis = (title = "S01 Compliance",)
+        axis = (title = "S01 Compliance", limits = (nothing, (0, 100)))
     )
 
     save(filename, figure; px_per_unit = 3)

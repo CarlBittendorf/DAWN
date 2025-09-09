@@ -77,7 +77,7 @@ The following lines run the scripts daily at 5:30 am, 5:35 am, 5:40 am, 7:30 am,
 30 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 1'
 35 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 2'
 40 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 3'
-0 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance.jl
+0 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance.jl'
 ```
 
 To update to the latest version of DAWN, run
