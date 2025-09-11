@@ -40,8 +40,7 @@ function script()
                             "C01 Cognition", "C01 Emotion", "B05/C03 Mindfulness", "B05/C03 PSAT"]),
 
                         # remove test accounts
-                        :Participant => ByRow(x -> !(x in [
-                            "TK_test", "test", "TESTB01", "TEST9999", "test_b05_1", "test_b05_2"]))
+                        :Participant => ByRow(x -> !(x in TEST_ACCOUNTS))
                     )
                     transform(
                         :Date => ByRow(x -> floor(x, Week));
