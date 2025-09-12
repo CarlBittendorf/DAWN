@@ -82,8 +82,12 @@ end
 function make_body(contents)
     body(
         style = "font-family: Roboto, sans-serif; margin: 0; padding: 0; width: 100%; background-color: rgb(239, 239, 239); -webkit-font-smoothing: antialiased; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;",
-        m("table", width = "100%", border = "0", cellspacing = "0",
-            cellpadding = "0", style = "width: 100%;",
+        m("table",
+            width = "100%",
+            border = "0",
+            cellspacing = "0",
+            cellpadding = "0",
+            style = "width: 100%;",
             tr(
                 td(align = "center",
                 m("table",
@@ -133,6 +137,33 @@ function make_footer()
     )
 end
 
+function make_table(df)
+    m("table",
+        role = "presentation",
+        border = "0",
+        cellpadding = "0",
+        cellspacing = "0",
+        style = "width: 100%; padding: 0px 0px 20px;",
+        [
+            thead(
+                tr(
+                [th(
+                     scope = "col",
+                     style = "font-family: Roboto, sans-serif; font-size: 16px; font-weight: 300; line-height: 1.2; text-align: left; padding: 8px 24px 8px 8px; background-color: rgb(239, 239, 239);",
+                     strong(name)
+                 ) for name in names(df)]
+            )
+            ),
+            tbody(
+                style = "font-family: Roboto, sans-serif; font-size: 15px; font-weight: 300; text-align: left;",
+                [tr([td(style = "padding-left: 8px; padding-top: 4px;", value)
+                     for value in row])
+                 for row in eachrow(df)]
+            )
+        ]
+    )
+end
+
 function make_html(title, content)
     "<!DOCTYPE html>\n" *
     string(
@@ -175,7 +206,7 @@ function make_feedback_html(feedback)
         [
             make_title("Feedback"),
             make_paragraph("Attention! The following information may be inaccurate for technical reasons.\n"),
-            [make_paragraph(x) for x in feedback]...
+            feedback...
         ]
     )
 end

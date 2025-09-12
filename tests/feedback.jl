@@ -22,11 +22,14 @@ participantuuids = @chain db begin
 
     groupby(:Participant)
     subset(
-        :Date => (x -> x .> cutoff - Day(14)),
+        :Date => (x -> x .> cutoff - Day(14) .&& x .<= cutoff),
         :EventNegative => ByRow(!ismissing);
         ungroup = false
     )
-    subset(:EventNegative => (x -> length(x) in [7, 14]))
+    subset(
+        :Date => (x -> maximum(x) == cutoff),
+        :EventNegative => (x -> length(x) in [5, 7, 14])
+    )
 
     getproperty(:InteractionDesignerParticipantUUID)
     unique
@@ -40,13 +43,15 @@ feedback = @chain token begin
         studyuuid,
         participantuuids,
         B01_INTENSE_SAMPLING_VARIABLE_UUIDS;
-        cutofftime = make_cutoff(hour = 7, minute = 0),
+        cutofftime = make_cutoff(x = DateTime(cutoff + Day(1))),
         hoursinpast = 168
     )
-    make_feedback_strings(df_participants, city)
+    make_feedback_B01_html(df_participants, city)
 end
 
-compensation = @chain db begin
+send_feedback_email(EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER, feedback)
+
+feedback = @chain db begin
     read_dataframe("data")
     leftjoin(df_participants; on = :Participant)
     dropmissing(:InteractionDesignerParticipantUUID)
@@ -70,9 +75,13 @@ compensation = @chain db begin
     transform(:Day => ByRow(x -> ceil(Int, x / 30)) => :Block)
 
     groupby([:Participant, :Block])
-    combine(:ChronoRecord => (x -> round(count(!ismissing, x) / 30 * 100; digits = 2)) => :Compliance)
+    combine(
+        :Date => (x -> minimum(x; init = cutoff)) => :Start,
+        :Date => (x -> maximum(x; init = cutoff - Day(180))) => :End,
+        :ChronoRecord => (x -> round(count(!ismissing, x) / 30 * 100; digits = 2)) => :Compliance
+    )
 
-    make_compensation_strings(df_participants, city)
+    make_feedback_S01_html(df_participants, city)
 end
 
-send_feedback_email(EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER, [feedback..., compensation...])
+send_feedback_email(EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER, feedback)

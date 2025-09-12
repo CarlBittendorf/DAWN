@@ -136,64 +136,85 @@ camel2snakecase(x) = join(lowercase.(split(string(x), r"(?=[A-Z])")), "_")
 
 snake2camelcase(x) = join(uppercasefirst.(split(x, "_")))
 
-function make_feedback_strings(data, df_participants, city)
-    feedback = String[]
+function make_feedback_B01_html(data, df_participants, city)
+    html = Hyperscript.Node[]
 
     for participant in data["participants"]
         id = participant["pseudonym"]
         index = findfirst(isequal(id), df_participants.Participant)
         group = df_participants.InteractionDesignerGroup[index]
 
-        alarms = 0
-        items = 0
-
-        for (_, dict) in participant["variableValues"]
-            entries = @chain dict begin
+        items = sum(
+            @chain dict begin
                 getindex("values")
                 filter(x -> !isnothing(x["value"]), _)
                 length
             end
+        for (_, dict) in participant["variableValues"]
+        )
 
-            items += entries
+        df = @chain participant["variableValues"] begin
+            filter(x -> last(x)["displayName"] == "event_negative", _)
+            values
+            only
+            getindex("values")
 
-            if dict["displayName"] == "event_negative"
-                alarms = entries
-            end
+            DataFrame(
+                :DateTime => getindex.(_, "createdAt"),
+                :Value => getindex.(_, "value")
+            )
+            transform(:DateTime => ByRow(x -> DateTime(x[1:(end - 4)])); renamecols = false)
+            transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
+
+            groupby(:Date)
+            combine(:Value => (x -> count(!isnothing, x)) => :Responded)
+
+            last(7)
+            transform(:Responded => ByRow(x -> B01_COMPENSATION[min(x, 5)]) => :Compensation)
+
+            push!(_, ["Total", sum(_.Responded), sum(_.Compensation)]; promote = true)
+
+            transform(
+                :Compensation => (x -> Printf.format.(Ref(Printf.Format("%.2f")), x) .* "€");
+                renamecols = false
+            )
         end
 
-        s = """$id ($city, $group)
-        Number of B01 alarms responded to: $alarms
-        Number of completed B01 items: $items
-        """
-
-        push!(feedback, s)
+        push!(
+            html,
+            make_paragraph(
+                """$id ($city, $group)
+                Number of completed B01 items: $items"""
+            ),
+            make_table(df)
+        )
     end
 
-    return feedback
+    return html
 end
 
-function make_compensation_strings(df, df_participants, city)
-    compensation = String[]
+function make_feedback_S01_html(df, df_participants, city)
+    html = Hyperscript.Node[]
 
     for id in unique(df.Participant)
         index = findfirst(isequal(id), df_participants.Participant)
         group = df_participants.InteractionDesignerGroup[index]
 
-        df_participant = subset(df, :Participant => ByRow(isequal(id)))
-
-        s = """$id ($city, $group)
-        S01 compliance
-        """
-
-        for (_, i, c) in eachrow(df_participant)
-            start = (i - 1) * 30 + 1
-            finish = i * 30
-
-            s *= "Days $start-$finish: $c%\n"
+        df_participant = @chain df begin
+            subset(:Participant => ByRow(isequal(id)))
+            transform(:Compliance => ByRow(x -> string(x) * "%"); renamecols = false)
+            select(Not(:Participant))
         end
 
-        push!(compensation, s)
+        push!(
+            html,
+            make_paragraph(
+                """$id ($city, $group)
+                S01 compliance"""
+            ),
+            make_table(df_participant)
+        )
     end
 
-    return compensation
+    return html
 end

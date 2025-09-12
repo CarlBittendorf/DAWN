@@ -68,15 +68,18 @@ To have the scripts run automatically at a specific time, a corresponding entry 
 crontab -e
 ```
 
-The following lines run the scripts daily at 5:30 am, 5:35 am, 5:40 am, 7:30 am, 7:35 am, 7:40 am and 8:00 am respectively.
+The following lines run the signal and feedback scripts daily and the compliance script weekly.
 
 ```plain
 30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 1'
 35 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 2'
 40 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 3'
-30 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 1'
-35 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 2'
-40 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback.jl 3'
+10 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 1'
+15 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 2'
+20 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 3'
+25 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 1'
+30 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 2'
+35 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 3'
 0 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance.jl'
 ```
 
