@@ -27,7 +27,7 @@ participantuuids = @chain db begin
         ungroup = false
     )
     subset(
-        :Date => (x -> maximum(x) == cutoff),
+        :Date => (x -> maximum(x; init = cutoff - Day(1)) == cutoff),
         :EventNegative => (x -> length(x) in [5, 7, 14])
     )
 

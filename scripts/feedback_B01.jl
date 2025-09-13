@@ -27,7 +27,7 @@ function script()
             ungroup = false
         )
         subset(
-            :Date => (x -> maximum(x) == cutoff),
+            :Date => (x -> maximum(x; init = cutoff - Day(1)) == cutoff),
             :EventNegative => (x -> length(x) in [5, 7, 14])
         )
 
@@ -44,10 +44,10 @@ function script()
                 studyuuid,
                 participantuuids,
                 B01_INTENSE_SAMPLING_VARIABLE_UUIDS;
-                cutofftime = make_cutoff(cutoff + Day(1)),
+                cutofftime = make_cutoff(x = DateTime(cutoff + Day(1))),
                 hoursinpast = 168
             )
-            make_feedback_B01_strings(df_participants, city)
+            make_feedback_B01_html(df_participants, city)
         end
 
         send_feedback_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_B01_RECEIVERS[city], feedback)
