@@ -35,7 +35,11 @@ function script()
         transform(:Day => ByRow(x -> ceil(Int, x / 30)) => :Block)
 
         groupby([:Participant, :Block])
-        combine(:ChronoRecord => (x -> round(count(!ismissing, x) / 30 * 100; digits = 2)) => :Compliance)
+        combine(
+            :Date => (x -> minimum(x; init = cutoff)) => :Start,
+            :Date => (x -> maximum(x; init = cutoff - Day(180))) => :End,
+            :ChronoRecord => (x -> round(count(!ismissing, x) / 30 * 100; digits = 2)) => :Compliance
+        )
 
         make_feedback_S01_html(df_participants, city)
     end
