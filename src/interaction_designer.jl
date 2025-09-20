@@ -279,6 +279,7 @@ function process_interaction_designer_data(
             :pseudonym => :Participant,
             :group => :InteractionDesignerGroup,
             :triggerCount => :Trigger,
+            :triggerName => :TriggerName,
             :triggerDateTime => :FormTrigger,
             :startDateTime => :FormStart,
             :finishDateTime => :FormFinish,
@@ -336,7 +337,11 @@ function process_interaction_designer_data(
             [:ChronoRecord, :ASRM5TotalScore] => ByRow((c, s) -> !ismissing(c) && ismissing(s) ? 0 : s) => :ASRM5TotalScore
         )
 
-        subset(:Date => ByRow(!isequal(Date(now()))))
+        subset(
+            :Date => ByRow(!isequal(Date(now()))),
+            :TriggerName => ByRow(x -> !(x in [
+                "Initialization", "ConfigurationUpdate", "RequestedInteraction"]))
+        )
 
         groupby([:Participant, :Date])
         combine(
