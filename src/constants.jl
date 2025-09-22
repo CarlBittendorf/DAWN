@@ -222,3 +222,12 @@ const SIGNALS = [
         [:SymptomRemission, :SymptomRemissionDate]
     )
 ]
+
+const PRIMARY_COLOR = colorant"#4C90B5"
+const SECONDARY_COLOR = colorant"#A4C6D9"
+const CENTRAL_PROJECTS_COLOR = colorant"#878786"
+const DOMAIN_A_COLOR = colorant"#CFB23F"
+const DOMAIN_B_COLOR = colorant"#BF3E39"
+const DOMAIN_C_COLOR = colorant"#02738D"
+
+const PALETTE = [PRIMARY_COLOR, SECONDARY_COLOR, DOMAIN_A_COLOR, DOMAIN_B_COLOR]

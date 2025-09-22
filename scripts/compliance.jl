@@ -76,7 +76,8 @@ function script()
             :Compliance => "Compliance [%]";
             color = :StudyCenter => "Study Center"
         ) *
-        visual(Lines);
+        visual(Lines),
+        scales(Color = (; palette = PALETTE));
         axis = (title = "S01 Compliance", limits = (nothing, (0, 100)))
     )
 
