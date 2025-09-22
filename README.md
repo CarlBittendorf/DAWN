@@ -1,5 +1,5 @@
 <div align="center">
-    <img alt="DAWN Logo" src="DAWN Logo.png" height=400>
+    <img alt="DAWN Logo" src="DAWN Logo.svg" height=300>
 </div>
 
 ## Introduction
