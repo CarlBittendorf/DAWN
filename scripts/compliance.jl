@@ -1,9 +1,5 @@
 include("../src/main.jl")
 
-using AlgebraOfGraphics, CairoMakie
-
-set_aog_theme!()
-
 function script()
     df = @chain begin
         vcat((

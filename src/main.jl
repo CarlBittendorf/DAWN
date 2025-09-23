@@ -9,7 +9,7 @@ include("types.jl")
 include("../secrets.jl")
 
 using Chain, DataFrames, MiniLoggers, DuckDB, PyCall, HTTP, JSON, CSV, XML, ZipFile,
-      Hyperscript
+      Hyperscript, AlgebraOfGraphics, CairoMakie
 using Dates, Statistics, Printf
 
 @pyinclude("src/email.py")
@@ -24,3 +24,5 @@ include("movisensxs.jl")
 include("redcap.jl")
 include("email.jl")
 include("logging.jl")
+
+set_aog_theme!()
