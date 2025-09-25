@@ -245,7 +245,7 @@ function send_compliance_email(credentials, receivers, filenames)
         "Compliance",
         [
             make_title("Compliance"),
-            make_paragraph("This is the weekly compliance report for CRC393."),
+            make_paragraph("This is the weekly compliance report for CRC393. The solid lines show the average percentage of ChronoRecord items completed by participants per week, broken down by study center. We selected the ChronoRecord item for calculating compliance because it is crucial for detecting inflection signals, which are fundamental to our study. The dashed line represents the minimum target of 70% compliance."),
             span(style = "padding-top: 60px;"),
             [img(
                  src = "cid:" * string(i - 1),
