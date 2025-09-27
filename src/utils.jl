@@ -180,11 +180,13 @@ function make_feedback_B01_html(data, df_participants, city)
             )
         end
 
+        percentage = round(100 * items / (73 * nrow(df)); digits = 2)
+
         push!(
             html,
             make_paragraph(
                 """$id ($city, $group)
-                Number of completed B01 items: $items"""
+                Number of completed B01 items: $items ($percentage%)"""
             ),
             make_table(df)
         )
