@@ -143,7 +143,7 @@ function missing_intense_sampling(df, cutoff)
             alarm = isalarm(
                 (x, i) -> x[i] isa Vector &&
                               length(x[i]) == 5 &&
-                              all(ismissing, replace(x[i], typemax(Int32) => missing)),
+                              all(ismissing, replace(x[i], typemin(Int32) => missing)),
                 df, :EventNegative, cutoff, 2
             )
         elseif group in ["B05/C03 Mindfulness", "B05/C03 PSAT",
@@ -151,7 +151,7 @@ function missing_intense_sampling(df, cutoff)
             alarm = isalarm(
                 (x, y, i) -> x[i] isa Vector &&
                                  length(x[i]) in [2, 4] &&
-                                 all(ismissing, replace(x[i], typemax(Int32) => missing)) &&
+                                 all(ismissing, replace(x[i], typemin(Int32) => missing)) &&
                                  ismissing(y[i]),
                 df, [:SocialInteractions, :SocialContact], cutoff, 2
             )
