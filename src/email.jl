@@ -47,8 +47,8 @@ const CSS = """
 }
 """
 
-@tags head body tbody thead h1 td th tr span p a br img strong
-@tags_noescape style
+Hyperscript.@tags head body tbody thead h1 td th tr span p a br img strong
+Hyperscript.@tags_noescape style
 
 function make_head(title)
     head(
@@ -178,8 +178,13 @@ function make_html(title, content)
     )
 end
 
-function make_error_html(message, filename)
-    make_html(
+function send_email(credentials, receivers, subject, html, filenames = [])
+    py"send_email"(credentials.server, credentials.login, credentials.password,
+        credentials.sender, receivers, subject, html, filenames)
+end
+
+function send_error_email(credentials, receivers, message, filename)
+    html = make_html(
         "Error Message",
         [
             make_title("Error Message"),
@@ -188,54 +193,37 @@ function make_error_html(message, filename)
             make_paragraph("The log file can be found under: $filename")
         ]
     )
-end
-
-function make_signals_html(signals)
-    make_html(
-        "Signals",
-        [
-            make_title("Signals"),
-            [make_paragraph(signal) for signal in signals]...
-        ]
-    )
-end
-
-function make_feedback_html(feedback)
-    make_html(
-        "Feedback",
-        [
-            make_title("Feedback"),
-            make_paragraph("Attention! The following information may be inaccurate for technical reasons.\n"),
-            feedback...
-        ]
-    )
-end
-
-function send_email(credentials, receivers, subject, html, filenames = [])
-    py"send_email"(credentials.server, credentials.login, credentials.password,
-        credentials.sender, receivers, subject, html, filenames)
-end
-
-function send_error_email(credentials, receivers, message, filename)
-    html = make_error_html(message, filename)
 
     send_email(credentials, receivers, "CRC393 Error Message", html)
 
     @info "Sent error email."
 end
 
-function send_signals_email(credentials, receivers, signals)
-    html = make_signals_html(signals)
+function send_signals_email(credentials, receivers, city, signals)
+    html = make_html(
+        "Signals",
+        [
+            make_title("Signals"),
+            [make_paragraph(signal) for signal in signals]...
+        ]
+    )
 
-    send_email(credentials, receivers, "CRC393 Signals", html)
+    send_email(credentials, receivers, "CRC393 Signals $city", html)
 
     @info "Sent signals email."
 end
 
-function send_feedback_email(credentials, receivers, feedback)
-    html = make_feedback_html(feedback)
+function send_feedback_email(credentials, receivers, subproject, feedback)
+    html = make_html(
+        "Feedback",
+        [
+            make_title("Feedback"),
+            make_paragraph(""),
+            feedback...
+        ]
+    )
 
-    send_email(credentials, receivers, "CRC393 Feedback", html)
+    send_email(credentials, receivers, "CRC393 Feedback $subproject", html)
 
     @info "Sent feedback email."
 end

@@ -6,15 +6,27 @@ function script()
 
     city = sc.name
 
+    cutoff = Date(now()) - Day(1)
+
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
     df_participants = read_dataframe(db, "participants")
 
-    cutoff = Date(now()) - Day(1)
+    df = @chain begin
+        read_dataframe(db, "queries")
+        subset(:Variable => ByRow(isequal("ChronoRecord")))
 
-    feedback = @chain db begin
-        read_dataframe("data")
+        # entries before 05:30 are considered to belong to the previous day
+        transform(
+            :DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date;
+            renamecols = false
+        )
+
+        groupby([:Participant, :Date])
+        combine(:Value => (x -> coalesce(x...)); renamecols = false)
+
+        # remove data from inactive participants
         leftjoin(df_participants; on = :Participant)
         dropmissing(:InteractionDesignerParticipantUUID)
 
@@ -22,15 +34,16 @@ function script()
         # and have at least one entry within the last 180 days
         groupby(:Participant)
         subset(
-            :Date => (x -> (Dates.value(cutoff - minimum(x)) + 1) % 180 == 0),
-            :Date => (x -> any(d -> d > cutoff - Day(180), x));
+            :Date => (x -> (Dates.value(cutoff - minimum(x; init = cutoff))) % 180 == 0),
+            :Date => (x -> any(d -> d > cutoff - Day(180), x)),
+            :Date => ByRow(x -> x < cutoff);
             ungroup = false
         )
         transform(
             :Date => (x -> Dates.value.(x .- minimum(x; init = cutoff)) .+ 1) => :Day;
             ungroup = false
         )
-        lastdays(180, cutoff)
+        lastdays(180, cutoff - Day(1))
 
         transform(:Day => ByRow(x -> ceil(Int, x / 30)) => :Block)
 
@@ -38,14 +51,19 @@ function script()
         combine(
             :Date => (x -> minimum(x; init = cutoff)) => :Start,
             :Date => (x -> maximum(x; init = cutoff - Day(180))) => :End,
-            :ChronoRecord => (x -> round(count(!ismissing, x) / 30 * 100; digits = 2)) => :Compliance
+            :Value => (x -> format_compliance(count(!ismissing, x) / 30)) => :Compliance
         )
 
-        make_feedback_S01_html(df_participants, city)
+        select(:Participant, :Block, :Start, :End, :Compliance)
     end
 
-    if !isempty(feedback)
-        send_feedback_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_S01_RECEIVERS[city], feedback)
+    if nrow(df) > 0
+        send_feedback_email(
+            EMAIL_CREDENTIALS,
+            EMAIL_FEEDBACK_S01[city],
+            "S01",
+            Hyperscript.Node[make_table(df)]
+        )
     end
 end
 

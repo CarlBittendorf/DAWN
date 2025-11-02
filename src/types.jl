@@ -6,8 +6,8 @@ struct StudyCenter
     password::String
     studyuuid::String
     groups::Dict{String, String}
-    movisens_id::String
-    movisens_key::String
+    movisensxs_id::String
+    movisensxs_key::String
 end
 
 struct EmailCredentials
@@ -15,16 +15,4 @@ struct EmailCredentials
     login::String
     password::String
     sender::String
-end
-
-struct Variable
-    name::String
-    uuid::String
-    type::DataType
-end
-
-struct Signal
-    f::Function
-    scope::Vector{String}
-    variables::Vector{Symbol}
 end

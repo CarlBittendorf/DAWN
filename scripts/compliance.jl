@@ -1,63 +1,58 @@
 include("../src/main.jl")
 
 function script()
-    df = @chain begin
-        vcat((
-            begin
-                city = sc.name
+    df = DataFrame()
 
-                # connection to database
-                db = DuckDB.DB(joinpath("data", city * ".db"))
+    for sc in STUDY_CENTERS
+        city = sc.name
 
-                df_participants = read_dataframe(db, "participants")
+        # connection to database
+        db = DuckDB.DB(joinpath("data", city * ".db"))
 
-                # interaction designer ids
-                participants = unique(df_participants.Participant)
+        df_participants = read_dataframe(db, "participants")
 
-                df_participants = @chain REDCAP_API_TOKEN_1376 begin
-                    download_redcap_participants(participants)
+        df_center = @chain begin
+            # contains :Participant, :DateTime, :Variable and :Value columns
+            read_dataframe(db, "queries")
 
-                    # consider only the most recent entry for each participant
-                    groupby(:Participant)
-                    subset(:Instance => (x -> x .== maximum(x)))
+            # remove test accounts
+            subset(:Participant => ByRow(x -> !(x in TEST_ACCOUNTS)))
 
-                    rightjoin(df_participants; on = :Participant)
+            subset(:Variable => ByRow(isequal("ChronoRecord")))
 
-                    transform(:LocationDresden => ByRow(x -> ismissing(x) ? city : "Dresden ($x)") => :StudyCenter)
-                end
+            # remove data from inactive participants
+            leftjoin(df_participants; on = :Participant)
+            dropmissing(:InteractionDesignerParticipantUUID)
 
-                @chain db begin
-                    read_dataframe("data")
+            # entries before 05:30 are considered to belong to the previous day
+            transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
 
-                    leftjoin(df_participants; on = :Participant)
+            groupby([:Participant, :Date])
+            combine(
+                :Value => (x -> coalesce(x...)),
+                All() => ((x...) -> city) => :City,
+                :StudyCenter => first;
+                renamecols = false
+            )
+        end
 
-                    subset(
-                        :InteractionDesignerGroup => ByRow(x -> x in ["S01", "B01",
-                            "C01 Cognition", "C01 Emotion", "B05/C03 Mindfulness", "B05/C03 PSAT"]),
+        df = vcat(df, df_center)
+    end
 
-                        # remove test accounts
-                        :Participant => ByRow(x -> !(x in TEST_ACCOUNTS))
-                    )
-                    transform(
-                        :Date => ByRow(x -> floor(x, Week));
-                        renamecols = false
-                    )
-                    dropmissing(:StudyCenter)
-                    subset(:StudyCenter => ByRow(!isequal("Dresden")))
+    df_figure = @chain df begin
+        transform([:City, :StudyCenter] => ByRow((c, sc) -> coalesce(sc, c)) => :StudyCenter)
+        dropmissing(:StudyCenter)
+        subset(:StudyCenter => ByRow(!isequal("Dresden")))
 
-                    groupby([:StudyCenter, :Date])
-                    combine(
-                        nrow => :Total,
-                        :ChronoRecord => (x -> count(ismissing, x)) => :Missing
-                    )
+        groupby([:StudyCenter, :Date])
+        combine(
+            nrow => :Total,
+            :Value => (x -> count(!ismissing, x)) => :Responded
+        )
 
-                    transform([:Total, :Missing] => ByRow((t, m) -> (t - m) / t * 100) => :Compliance)
-                end
-            end
-        for sc in STUDY_CENTERS
-        )...)
+        transform([:Total, :Responded] => ByRow((t, x) -> x / t * 100) => :Compliance)
 
-        subset(:Date => ByRow(x -> x >= Date("2025-07-21")))
+        subset(:Date => ByRow(x -> x >= Date(now() - Week(10))))
         sort([:StudyCenter, :Date])
     end
 
@@ -66,7 +61,7 @@ function script()
 
     figure = draw(
         mapping([70]) * visual(HLines; linestyle = :dash) +
-        data(df) *
+        data(df_figure) *
         mapping(
             :Date,
             :Compliance => "Compliance [%]";
@@ -74,12 +69,13 @@ function script()
         ) *
         visual(Lines),
         scales(Color = (; palette = PALETTE));
-        axis = (title = "S01 Compliance", limits = (nothing, (0, 100)))
+        figure = (; title = "S01 Compliance"),
+        axis = (; limits = (nothing, (0, 100)))
     )
 
     save(filename, figure; px_per_unit = 3)
 
-    send_compliance_email(EMAIL_CREDENTIALS, EMAIL_COMPLIANCE_RECEIVERS, [filename])
+    send_compliance_email(EMAIL_CREDENTIALS, EMAIL_COMPLIANCE, [filename])
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)

@@ -9,15 +9,10 @@ for sc in STUDY_CENTERS
 
     df_participants = read_dataframe(db, "participants")
 
-    df_data = @chain db begin
-        read_dataframe("data")
+    df_data = @chain begin
+        read_dataframe(db, "queries")
         subset(:Date => ByRow(x -> x < Date(now()) - Day(1)))
-        transform(
-            [:EventNegative, :SocialInteractions] .=>
-                ByRow(x -> ismissing(x) ? x : collect(skipmissing(x)));
-            renamecols = false
-        )
-        sort([:Participant, :Date])
+        sort([:Participant, :DateTime])
     end
 
     # remove database
@@ -27,46 +22,10 @@ for sc in STUDY_CENTERS
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    DBInterface.execute(
-        db,
-        """
-        CREATE TABLE IF NOT EXISTS participants (
-            Participant STRING,
-            InteractionDesignerParticipantUUID STRING,
-            InteractionDesignerGroup STRING
-        )
-        """
-    )
-
-    DBInterface.execute(
-        db,
-        """
-        CREATE TABLE IF NOT EXISTS data (
-            Participant STRING,
-            Date DATE,
-            ChronoRecord INTEGER,
-            PHQ9TotalScore INTEGER,
-            ASRM5TotalScore INTEGER,
-            FallAsleep TIME,
-            WakeUp TIME,
-            SleepQuality INTEGER,
-            SocialInteractionMore INTEGER,
-            Influence INTEGER,
-            Medication STRING,
-            SubstanceMore INTEGER,
-            Expectation INTEGER,
-            IsA04 BOOLEAN,
-            EventNegative INTEGER[],
-            TrainingProblems BOOLEAN,
-            TrainingQuestions BOOLEAN,
-            SocialInteractions INTEGER[],
-            SocialContact BOOLEAN,
-            ExerciseSuccessful INTEGER
-        )
-        """
-    )
+    create_or_replace_participants_database(db)
+    create_or_replace_queries_database(db)
 
     # fill database again
     append_dataframe(db, df_participants, "participants")
-    append_dataframe(db, df_data, "data")
+    append_dataframe(db, df_data, "queries")
 end

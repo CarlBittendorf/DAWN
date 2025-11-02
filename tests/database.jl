@@ -8,4 +8,4 @@ city = sc.name
 db = DuckDB.DB(joinpath("data", city * ".db"))
 
 df_participants = read_dataframe(db, "participants")
-df_data = read_dataframe(db, "data")
+df_data = read_dataframe(db, "queries")
