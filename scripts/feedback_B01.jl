@@ -50,6 +50,7 @@ function script()
             # filter participants who finished 5, 7, or 14 days of B01 intense sampling two days ago
             groupby(:Participant)
             subset(
+                :Date => (x -> any(isequal(cutoff - Day(1)), x)),
                 :Date => (x -> Dates.value(cutoff - minimum(x; init = cutoff)) in [5, 7, 14]);
                 ungroup = false
             )
@@ -78,6 +79,7 @@ function script()
 
                 df_feedback = @chain df_participant begin
                     select(:Date, :Responded, :Compensation)
+                    sort(:Date)
 
                     push!(
                         _,
