@@ -267,7 +267,7 @@ function script()
             send_signals_email(
                 EMAIL_CREDENTIALS, [email, EMAIL_ADDITIONAL_RECEIVERS...], city, strings)
         else
-            send_signals_email(EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER, city, strings)
+            send_signals_email(EMAIL_CREDENTIALS, EMAIL_ADDITIONAL_RECEIVERS, city, strings)
         end
     end
 
