@@ -262,6 +262,6 @@ function upload_redcap_signals(token, signals)
         variablevalues = preprocess.(last.(signal.data))
         parameters = [name => value for (name, value) in zip(variablenames, variablevalues)]
 
-        upload_redcap_signal(token, participant, signalname, parameters)
+        upload_redcap_signal(token, signal.participant, signalname, parameters)
     end
 end
