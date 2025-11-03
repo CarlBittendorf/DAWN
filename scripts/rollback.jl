@@ -11,7 +11,7 @@ for sc in STUDY_CENTERS
 
     df_data = @chain begin
         read_dataframe(db, "queries")
-        subset(:Date => ByRow(x -> x < Date(now()) - Day(1)))
+        subset(:DateTime => ByRow(x -> x < floor(now(), Day) - Day(1) + Hour(5) + Minute(30)))
         sort([:Participant, :DateTime])
     end
 
