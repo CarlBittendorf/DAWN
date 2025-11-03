@@ -12,10 +12,19 @@ function script()
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
+    # all current participant uuids in the InteractionDesigner
+    participantuuids = download_interaction_designer_participants(token, studyuuid)
+
     # determine participant uuids that are in B01
     participantuuids = @chain begin
+        # contains :Participant, :InteractionDesignerParticipantUUID, :InteractionDesignerGroup and :StudyCenter columns
         read_dataframe(db, "participants")
+
+        # remove inactive uuids
+        subset(:InteractionDesignerParticipantUUID => ByRow(x -> x in participantuuids))
+
         subset(:InteractionDesignerGroup => ByRow(isequal("B01")))
+
         getproperty(:InteractionDesignerParticipantUUID)
         unique
     end
