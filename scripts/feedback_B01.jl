@@ -12,6 +12,9 @@ function script()
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
+    # bearer token, which is valid for five minutes
+    token = download_interaction_designer_token(username, password, clientsecret)
+
     # all current participant uuids in the InteractionDesigner
     participantuuids = download_interaction_designer_participants(token, studyuuid)
 
@@ -30,9 +33,6 @@ function script()
     end
 
     if !isempty(participantuuids)
-        # bearer token, which is valid for five minutes
-        token = download_interaction_designer_token(username, password, clientsecret)
-
         # intense sampling feedback
         df = @chain begin
             download_interaction_designer_variable_values(
