@@ -74,19 +74,10 @@ function script()
         dropmissing
     end
 
-    if ENV["USER"] == "carlbittendorf"
-        df_movisensxs = @chain "export/CRC393 movisensXS Assignments.json" begin
-            read(String)
-            JSON.parse
-            process_redcap_movisensxs
-            subset(:Participant => ByRow(x -> x in unique(df_participants.Participant)))
-        end
-    else
-        df_movisensxs = download_redcap_movisensxs(
-            REDCAP_API_TOKEN_1376,
-            unique(df_participants.Participant)
-        )
-    end
+    df_movisensxs = download_redcap_movisensxs(
+        REDCAP_API_TOKEN_1376,
+        unique(df_participants.Participant)
+    )
 
     df_participants = @chain df_participants begin
         # replace participants with new groups
@@ -138,18 +129,8 @@ function script()
     # DIPS
     ####################################################################################################
 
-    if ENV["USER"] == "carlbittendorf"
-        df_diagnoses = @chain "export/CRC393 S02 DIPS.json" begin
-            read(String)
-            JSON.parse
-            process_redcap_diagnoses
-            subset(:Participant => ByRow(x -> x in unique(df_participants.Participant)))
-        end
-    else
-        df_diagnoses = download_redcap_diagnoses(REDCAP_API_TOKEN_1365, participants)
-    end
-
-    df_diagnoses = @chain df_diagnoses begin
+    df_diagnoses = @chain begin
+        download_redcap_diagnoses(REDCAP_API_TOKEN_1365, participants)
         sort([:Participant, :DIPSDate])
         transform(:DIPSDate => ByRow(identity) => :Date)
         fill_dates
@@ -166,18 +147,8 @@ function script()
     # ASSIGNMENTS
     ####################################################################################################
 
-    if ENV["USER"] == "carlbittendorf"
-        df_subprojects = @chain "export/CRC393 Subproject Assignments.json" begin
-            read(String)
-            JSON.parse
-            process_redcap_subprojects
-            subset(:Participant => ByRow(x -> x in unique(df_participants.Participant)))
-        end
-    else
-        df_subprojects = download_redcap_subprojects(REDCAP_API_TOKEN_1401, participants)
-    end
-
-    df_subprojects = @chain df_subprojects begin
+    df_subprojects = @chain begin
+        download_redcap_subprojects(REDCAP_API_TOKEN_1401, participants)
         transform(
             [:A06Included, :A06Finalized] => ByRow((i, f) -> i && !f) => :IsA06,
             [:B01Included, :B01Finalized] => ByRow((i, f) -> i && !f) => :IsB01,
