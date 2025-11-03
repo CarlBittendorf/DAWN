@@ -11,8 +11,6 @@ function script()
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    df_participants = read_dataframe(db, "participants")
-
     df = @chain begin
         read_dataframe(db, "queries")
         subset(:Variable => ByRow(isequal("ChronoRecord")))
@@ -25,10 +23,6 @@ function script()
 
         groupby([:Participant, :Date])
         combine(:Value => (x -> coalesce(x...)); renamecols = false)
-
-        # remove data from inactive participants
-        leftjoin(df_participants; on = :Participant)
-        dropmissing(:InteractionDesignerParticipantUUID)
 
         # determine all participants who just finished a multiple of 180 days
         # and have at least one entry within the last 180 days
