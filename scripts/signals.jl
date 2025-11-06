@@ -263,7 +263,7 @@ function script()
             @. format_signal
         end
 
-        if !isnothing(email)
+        if email isa String
             send_signals_email(
                 EMAIL_CREDENTIALS, [email, EMAIL_ADDITIONAL_RECEIVERS...], city, strings)
         else
