@@ -495,6 +495,7 @@ end
 function receiver(x::Union{RemissionDepression, SymptomRemission})
     x.city == "Marburg" && return EMAIL_MARBURG_GENERAL
     x.city == "Münster" && return EMAIL_MÜNSTER_A04
+    x.city == "Dresden" && return EMAIL_DRESDEN_UKD
 end
 
 function determine_signals(df, signals; cutoff = Date(now()) - Day(1))
