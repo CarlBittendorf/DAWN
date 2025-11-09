@@ -74,10 +74,10 @@ function script()
 
         groupby(:Participant)
         combine(
-            [:ChronoRecord, :Date] => ((x, d) -> format_compliance(mean(isvalid.(x[d .>= cutoff])))) => :S01,
-            :ChronoRecord => (x -> format_compliance(mean(isvalid.(x)))) => :S01Total,
-            [:HasMobileSensing, :MobileSensingRunning, :Date] => ((s, r, d) -> last(s) ? format_compliance(mean(r[d .>= cutoff])) : "-") => :Sensing,
-            [:HasMobileSensing, :MobileSensingRunning] => ((s, r) -> last(s) ? format_compliance(mean(r)) : "-") => :SensingTotal,
+            [:ChronoRecord, :Date] => ((x, d) -> mean(isvalid.(x[d .>= cutoff]))) => :S01,
+            :ChronoRecord => (x -> mean(isvalid.(x))) => :S01Total,
+            [:HasMobileSensing, :MobileSensingRunning, :Date] => ((s, r, d) -> last(s) ? mean(r[d .>= cutoff]) : missing) => :Sensing,
+            [:HasMobileSensing, :MobileSensingRunning] => ((s, r) -> last(s) ? mean(r) : missing) => :SensingTotal,
             :IsA04 => (x -> coalesce(reverse(x)...));
             renamecols = false
         )
@@ -97,9 +97,15 @@ function script()
         subset(:InteractionDesignerGroup => ByRow(x -> !contains(x, "Partner")))
 
         transform(:IsA04 => ByRow(x -> isvalid(x) ? x : false); renamecols = false)
-        transform("Is" .* projects => ((x...) -> join(projects[x], ", ")) => :Projects)
+        transform("Is" .* projects => ByRow((x...) -> join(projects[[x...]], ", ")) => :Projects)
 
-        sort(:Compliance)
+        sort(:S01)
+
+        transform(
+            [:S01, :S01Total, :Sensing, :SensingTotal] .=>
+                ByRow(x -> ismissing(x) ? "-" : format_compliance(x));
+            renamecols = false
+        )
 
         select(:Participant, :S01, :S01Total, :Sensing, :SensingTotal, :Projects)
     end
