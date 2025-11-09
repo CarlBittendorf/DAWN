@@ -68,6 +68,21 @@ function clean_movisensxs_id(x)
     end
 end
 
+function clean_study_center(location, location_dresden)
+    ismissing(location) && return missing
+
+    if location == "1"
+        ismissing(location_dresden) && return missing
+        location_dresden == "1" && return "Dresden (UKD)"
+        location_dresden == "2" && return "Dresden (FAL)"
+    end
+
+    location == "2" && return "Münster"
+    location == "3" && return "Marburg"
+
+    return missing
+end
+
 fill_down(x) = accumulate((a, b) -> coalesce(b, a), x; init = coalesce(x...))
 
 function fill_dates(df::DataFrame)

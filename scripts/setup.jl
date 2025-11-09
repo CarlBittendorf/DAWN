@@ -20,7 +20,7 @@ for sc in STUDY_CENTERS
     names, uuids, types = [getproperty.(VARIABLES_DATABASE, x)
                            for x in [:name, :uuid, :type]]
 
-    if ENV["USER"] == "carlbittendorf"
+    if haskey(ENV, "USER") && ENV["USER"] == "carlbittendorf"
         df_movisensxs = @chain "export/CRC393 movisensXS Assignments.json" begin
             read(String)
             JSON.parse

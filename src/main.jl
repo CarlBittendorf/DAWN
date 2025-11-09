@@ -15,7 +15,7 @@ using Dates, Statistics, Printf
 @pyinclude("src/email.py")
 
 include("utils.jl")
-include("db.jl")
+include("database.jl")
 include("signals.jl")
 include("variables.jl")
 include("interaction_designer.jl")

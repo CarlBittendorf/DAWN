@@ -68,19 +68,34 @@ To have the scripts run automatically at a specific time, a corresponding entry 
 crontab -e
 ```
 
-The following lines run the signal and feedback scripts daily and the compliance script weekly.
+The following lines run the update, signal and feedback scripts daily and the compliance scripts weekly.
 
 ```plain
-30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 1'
-35 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 2'
-40 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 3'
-10 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 1'
-15 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 2'
-20 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 3'
-25 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 1'
-30 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 2'
-35 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 3'
-0 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance.jl'
+30 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/update.jl 1'
+35 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/update.jl 2'
+40 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/update.jl 3'
+45 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 1'
+50 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 2'
+55 5 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/signals.jl 3'
+00 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 1'
+05 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 2'
+10 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_S01.jl 3'
+15 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 1'
+20 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 2'
+25 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B01.jl 3'
+30 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_C01.jl 1'
+35 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_C01.jl 2'
+40 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_C01.jl 3'
+45 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B05.jl 1'
+50 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B05.jl 2'
+55 7 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_B05.jl 3'
+00 8 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_C03.jl 1'
+05 8 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_C03.jl 2'
+10 8 * * 0-6 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/feedback_C03.jl 3'
+30 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_table.jl 1'
+35 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_table.jl 2'
+40 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_table.jl 3'
+00 9 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_figure.jl'
 ```
 
 To update to the latest version of DAWN, run
@@ -95,4 +110,4 @@ in the project directory.
 
 Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – GRK2739/1 – Project Nr. 447089431 – Research Training Group: KD²School – Designing Adaptive Systems for Economic Decisions
 
-Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – CRC393 – Project Nr. 521379614 – Trajectories of Affective Disorders: Cognitive-emotional Mechanisms of Symptom Change
+Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – CRC393 – Project Nr. 521379614 – Trajectories of Affective Disorders: Cognitive-Emotional Mechanisms of Symptom Change

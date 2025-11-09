@@ -32,17 +32,11 @@ function process_redcap_movisensxs(json)
         DataFrame(
             :Participant => getindex.(_, "participant_id"),
             :MovisensXSParticipantID => getindex.(_, "movisensid"),
-            :StudyCenter => getindex.(_, "standort"),
+            :Location => getindex.(_, "standort"),
             :LocationDresden => getindex.(_, "standort_dd"),
             :Instance => getindex.(_, "redcap_repeat_instance"),
             :FirstAssignmentDate => getindex.(_, "movisensid_timestamp"),
             :SecondAssignmentDate => getindex.(_, "date_movisense_id")
-        )
-
-        groupby(:Participant)
-        transform(
-            [:StudyCenter, :LocationDresden] .=> (x -> coalesce(reverse(x)...));
-            renamecols = false
         )
 
         transform(
@@ -50,15 +44,17 @@ function process_redcap_movisensxs(json)
             renamecols = false
         )
         transform(
+            :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x)),
             :MovisensXSParticipantID => ByRow(clean_movisensxs_id),
-            :StudyCenter => ByRow(x -> x == "1" ? 3 : x == "2" ? 2 : x == "3" ? 1 : missing),
-            :LocationDresden => ByRow(x -> x == "1" ? "UKD" : x == "2" ? "FAL" : missing),
-            :FirstAssignmentDate => ByRow(x -> x == "" ? missing : Date(DateTime(x[1:10]))),
+            [:Location, :LocationDresden] => ByRow(clean_study_center) => :StudyCenter,
+            :FirstAssignmentDate => ByRow(x -> x == "" ? missing : Date(x[1:10])),
             :SecondAssignmentDate => ByRow(x -> x == "" ? missing : Date(x));
             renamecols = false
         )
         transform([:FirstAssignmentDate, :SecondAssignmentDate] => ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
-        select(Not([:FirstAssignmentDate, :SecondAssignmentDate]))
+
+        select(:Participant, :MovisensXSParticipantID,
+            :Instance, :AssignmentDate, :StudyCenter)
     end
 end
 
@@ -78,26 +74,6 @@ function download_redcap_movisensxs(token, participants)
         )
 
         process_redcap_movisensxs
-    end
-end
-
-function process_redcap_centers(df)
-    @chain df begin
-        dropmissing(:StudyCenter)
-
-        # consider only the most recent entry for each participant
-        groupby(:Participant)
-        subset(:Instance => (x -> x .== maximum(x)))
-
-        subset([:StudyCenter, :LocationDresden]
-        => ByRow((sc, ld) -> sc != 3 || ld in ["UKD", "FAL"]))
-        transform(
-            :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x)),
-            [:StudyCenter, :LocationDresden] => ByRow((sc, ld) -> sc == 1 ? "Marburg" : sc == 2 ? "Münster" : "Dresden ($ld)") => :StudyCenter;
-            renamecols = false
-        )
-
-        select(:Participant, :StudyCenter)
     end
 end
 
@@ -155,15 +131,31 @@ function process_redcap_subprojects(json)
             :B01Included => getindex.(_, "b01_eingeschlossen"),
             :B01Finalized => getindex.(_, "b01_finalisiert"),
             :B01FinalizedDate => getindex.(_, "b01_finalisiert_date"),
+            :B03Included => getindex.(_, "b03_eingeschlossen"),
+            :B03Finalized => getindex.(_, "b03_finalisiert"),
+            :B03FinalizedDate => getindex.(_, "b03_finalisiert_date"),
+            :B05Included => getindex.(_, "b05_eingeschlossen"),
+            :B05Finalized => getindex.(_, "b05_finalisiert"),
+            :B05FinalizedDate => getindex.(_, "b05_finalisiert_date"),
             :B07Included => getindex.(_, "b07_eingeschlossen"),
             :B07Finalized => getindex.(_, "b07_finalisiert"),
-            :B07FinalizedDate => getindex.(_, "b07_finalisiert_date")
+            :B07FinalizedDate => getindex.(_, "b07_finalisiert_date"),
+            :C01Included => getindex.(_, "c01_eingeschlossen"),
+            :C01Finalized => getindex.(_, "c01_finalisiert"),
+            :C01FinalizedDate => getindex.(_, "c01_finalisiert_date"),
+            :C02Included => getindex.(_, "c02_eingeschlossen"),
+            :C02Finalized => getindex.(_, "c02_finalisiert"),
+            :C02FinalizedDate => getindex.(_, "c02_finalisiert_date"),
+            :C03Included => getindex.(_, "c03_eingeschlossen"),
+            :C03Finalized => getindex.(_, "c03_finalisiert"),
+            :C03FinalizedDate => getindex.(_, "c03_finalisiert_date"),
+            :C04Included => getindex.(_, "c04_eingeschlossen"),
+            :C04Finalized => getindex.(_, "c04_finalisiert"),
+            :C04FinalizedDate => getindex.(_, "c04_finalisiert_date")
         )
         transform(
-            [:A06Included, :A06Finalized, :B01Included,
-                :B01Finalized, :B07Included, :B07Finalized] .=> ByRow(isequal("1")),
-            [:A06IncludedDate, :A06FinalizedDate, :B01FinalizedDate, :B07FinalizedDate] .=>
-                ByRow(x -> x != "" ? Date(x[1:10]) : missing);
+            Cols(!endswith("Date")) .=> ByRow(isequal("1")),
+            Cols(endswith("Date")) .=> ByRow(x -> x != "" ? Date(x[1:10]) : missing);
             renamecols = false
         )
     end
@@ -183,9 +175,27 @@ function download_redcap_subprojects(token, participants)
                 "fields[5]" => "b01_eingeschlossen",
                 "fields[6]" => "b01_finalisiert",
                 "fields[7]" => "b01_finalisiert_date",
-                "fields[8]" => "b07_eingeschlossen",
-                "fields[9]" => "b07_finalisiert",
-                "fields[10]" => "b07_finalisiert_date"
+                "fields[8]" => "b03_eingeschlossen",
+                "fields[9]" => "b03_finalisiert",
+                "fields[10]" => "b03_finalisiert_date",
+                "fields[11]" => "b05_eingeschlossen",
+                "fields[12]" => "b05_finalisiert",
+                "fields[13]" => "b05_finalisiert_date",
+                "fields[14]" => "b07_eingeschlossen",
+                "fields[15]" => "b07_finalisiert",
+                "fields[16]" => "b07_finalisiert_date",
+                "fields[17]" => "c01_eingeschlossen",
+                "fields[18]" => "c01_finalisiert",
+                "fields[19]" => "c01_finalisiert_date",
+                "fields[20]" => "c02_eingeschlossen",
+                "fields[21]" => "c02_finalisiert",
+                "fields[22]" => "c02_finalisiert_date",
+                "fields[23]" => "c03_eingeschlossen",
+                "fields[24]" => "c03_finalisiert",
+                "fields[25]" => "c03_finalisiert_date",
+                "fields[26]" => "c04_eingeschlossen",
+                "fields[27]" => "c04_finalisiert",
+                "fields[28]" => "c04_finalisiert_date"
             ]
         )
 

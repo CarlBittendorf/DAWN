@@ -100,8 +100,7 @@ function download_movisensxs_running(df_movisensxs, studyid, key)
                     df,
                     DataFrame(
                         :Participant => participant,
-                        :Date => get_mobile_sensing_dates(result),
-                        :MobileSensingRunning => true
+                        :Date => get_mobile_sensing_dates(result)
                     )
                 )
             end

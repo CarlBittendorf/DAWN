@@ -16,10 +16,7 @@ function script()
         subset(:Variable => ByRow(isequal("ChronoRecord")))
 
         # entries before 05:30 are considered to belong to the previous day
-        transform(
-            :DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date;
-            renamecols = false
-        )
+        transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
 
         groupby([:Participant, :Date])
         combine(:Value => (x -> coalesce(x...)); renamecols = false)
@@ -52,11 +49,26 @@ function script()
     end
 
     if nrow(df) > 0
+        html = Hyperscript.Node[]
+
+        for participant in unique(df.Participant)
+            df_feedback = @chain df begin
+                subset(:Participant => ByRow(isequal(participant)))
+                select(:Block, :Start, :End, :Compliance)
+            end
+
+            push!(
+                html,
+                make_paragraph(participant),
+                make_table(df_feedback)
+            )
+        end
+
         send_feedback_email(
             EMAIL_CREDENTIALS,
             EMAIL_FEEDBACK_S01[city],
             "S01",
-            Hyperscript.Node[make_table(df)]
+            html
         )
     end
 end
