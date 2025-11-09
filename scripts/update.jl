@@ -136,7 +136,7 @@ function script()
 
     participants = unique(df_participants.Participant)
 
-    df_diagnoses = download_redcap_subprojects(REDCAP_API_TOKEN_1365, participants)
+    df_diagnoses = download_redcap_diagnoses(REDCAP_API_TOKEN_1365, participants)
 
     # update diagnoses database
     create_or_replace_diagnoses_database(db)
