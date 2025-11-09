@@ -59,8 +59,8 @@ function script()
 
         # use only participants who are still active
         groupby(:Participant)
-        subset(:Date => (x -> any(isequal(cutoff + Day(7)), x)); ungroup = false)
-        transform(:Date => (x -> Dates.value.(x .- minimum(x; init = cutoff + Day(7))) .+ 1) => :Day)
+        subset(:Date => (x -> any(isequal(cutoff + Day(6)), x)); ungroup = false)
+        transform(:Date => (x -> Dates.value.(x .- minimum(x; init = cutoff + Day(6))) .+ 1) => :Day)
 
         # add :HasMobileSensing and :MobileSensingRunning columns
         leftjoin(df_sensing; on = :Participant)
