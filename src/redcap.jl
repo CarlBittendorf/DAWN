@@ -154,7 +154,7 @@ function process_redcap_subprojects(json)
             :C04FinalizedDate => getindex.(_, "c04_finalisiert_date")
         )
         transform(
-            Cols(!endswith("Date")) .=> ByRow(isequal("1")),
+            Cols(x -> x != "Participant" && !endswith(x, "Date")) .=> ByRow(isequal("1")),
             Cols(endswith("Date")) .=> ByRow(x -> x != "" ? Date(x[1:10]) : missing);
             renamecols = false
         )
