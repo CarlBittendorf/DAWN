@@ -33,6 +33,19 @@ for sc in STUDY_CENTERS
         )
     end
 
+    df_centers = @chain df_movisensxs begin
+        groupby(:Participant)
+        transform(:StudyCenter => (x -> coalesce(reverse(x)...)); renamecols = false)
+
+        dropmissing(:StudyCenter)
+
+        # consider only the most recent entry for each participant
+        groupby(:Participant)
+        subset(:Instance => (x -> x .== maximum(x)))
+
+        select(:Participant, :StudyCenter)
+    end
+
     @chain df begin
         rename(
             :pseudonym => :Participant,
@@ -46,12 +59,12 @@ for sc in STUDY_CENTERS
             renamecols = false
         )
 
-        # add StudyCenter column
+        # add :StudyCenter column
         transform(
             :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x));
             renamecols = false
         )
-        leftjoin(process_redcap_centers(df_movisensxs); on = :Participant)
+        leftjoin(df_centers; on = :Participant)
 
         append_dataframe(db, _, "participants")
     end

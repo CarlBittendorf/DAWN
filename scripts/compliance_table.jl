@@ -40,7 +40,7 @@ function script()
         # replace missing with nothing to distinguish unanswered queries from those that were not asked
         transform(All() .=> ByRow(x -> ismissing(x) ? nothing : x); renamecols = false)
 
-        unstack(:Variable, :Value)
+        unstack(:Variable, :Value; combine = first)
 
         # entries before 05:30 are considered to belong to the previous day
         transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
