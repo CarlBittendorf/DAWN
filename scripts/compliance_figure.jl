@@ -75,7 +75,20 @@ function script()
 
     save(filename, figure; px_per_unit = 3)
 
-    send_compliance_email(EMAIL_CREDENTIALS, EMAIL_COMPLIANCE, [filename])
+    html = make_html(
+        "Compliance",
+        [
+            make_title("Compliance"),
+            make_paragraph("This is the weekly compliance report for CRC393. The solid lines show the average percentage of ChronoRecord items completed by participants per week, broken down by study center. We selected the ChronoRecord item for calculating compliance because it is crucial for detecting inflection signals, which are fundamental to our study. The dashed line represents the minimum target of 70% compliance."),
+            span(style = "padding-top: 60px;"),
+            img(
+                src = "cid:0",
+                style = "max-height: 100%; object-fit: contain; display: block; margin: auto auto;"
+            )
+        ]
+    )
+
+    send_email(EMAIL_CREDENTIALS, EMAIL_COMPLIANCE, "CRC393 Compliance", html, [filename])
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)

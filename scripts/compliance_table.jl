@@ -99,7 +99,7 @@ function script()
         transform(:IsA04 => ByRow(x -> isvalid(x) ? x : false); renamecols = false)
         transform("Is" .* projects => ByRow((x...) -> join(projects[[x...]], ", ")) => :Projects)
 
-        sort(:S01)
+        sort([:S01, :S01Total])
 
         transform(
             [:S01, :S01Total, :Sensing, :SensingTotal] .=>
@@ -110,12 +110,16 @@ function script()
         select(:Participant, :S01, :S01Total, :Sensing, :SensingTotal, :Projects)
     end
 
-    send_feedback_email(
-        EMAIL_CREDENTIALS,
-        EMAIL_FEEDBACK_S01[city],
-        "Overview",
-        Hyperscript.Node[make_table(df)]
+    html = make_html(
+        "Compliance",
+        [
+            make_title("Compliance"),
+            make_paragraph(""),
+            make_table(df)
+        ]
     )
+
+    send_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_S01[city], "CRC393 Compliance", html)
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)
