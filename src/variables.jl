@@ -146,7 +146,7 @@ const VARIABLES_B05_INTENSE_SAMPLING = [
         "c22226f5-73b8-4129-b462-e43a95769fe5", Int),
     Variable("ThoughtsPartnerEmpathySelf", "83e22b68-a250-4ff7-8c24-2f73fd85cfae", Int),
     Variable("ThoughtsPartnerEmpathicDistressSelf",
-        "8b6bea0-8edc-41f8-98b6-855b83e5f056", Int),
+        "68b6bea0-8edc-41f8-98b6-855b83e5f056", Int),
     Variable("ThoughtsPartnerEmpathicConcernSelf",
         "d33313fa-5eaa-42bb-a69b-bf00183293b1", Int),
     Variable("ThoughtsPartnerEmotionalSupportSelf",
