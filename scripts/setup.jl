@@ -4,10 +4,6 @@ for sc in STUDY_CENTERS
     city, username, password, clientsecret, studyuuid = sc.name,
     sc.username, sc.password, sc.client_secret, sc.studyuuid
 
-    # remove database if it exists
-    rm(joinpath("data", city * ".db"); force = true)
-    rm(joinpath("data", city * ".db.wal"); force = true)
-
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
     create_or_replace_participants_database(db)
