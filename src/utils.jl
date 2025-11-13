@@ -140,6 +140,18 @@ function is_symptom_free(phq9)
     return symptom_free
 end
 
+time2hours(x) = hour(x) + minute(x) / 60
+
+function duration(a, b)
+    if a > b
+        # different days
+        return 24 - time2hours(a) + time2hours(b)
+    else
+        # same day
+        return time2hours(b) - time2hours(a)
+    end
+end
+
 camel2snakecase(x) = join(lowercase.(split(string(x), r"(?=[A-Z])")), "_")
 
 snake2camelcase(x) = join(uppercasefirst.(split(x, "_")))

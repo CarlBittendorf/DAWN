@@ -306,21 +306,39 @@ function check_signal(::Type{Medication}, df, cutoff)
 end
 
 function check_signal(::Type{SleepDuration}, df, cutoff)
-    return nothing
-
-    SleepDuration(df, Pair{String, Any}["SleepDurationDate" => cutoff])
+    if last(df.IsA06) && isalarm(
+        (x, i) -> isvalid(x[i]) &&
+                      count(isvalid, x[1:i]) >= 5 &&
+                      (x[i] < 5 || x[i] > 10) &&
+                      count(e -> (e < 5 || e > 10), last(filter(isvalid, x), 5)) >= 3,
+        df, :SleepDuration, cutoff, 4
+    )
+        return SleepDuration(df, Pair{String, Any}["SleepDurationDate" => cutoff])
+    end
 end
 
 function check_signal(::Type{SleepQuality}, df, cutoff)
-    return nothing
-
-    SleepQuality(df, Pair{String, Any}["SleepQualityDate" => cutoff])
+    if last(df.IsA06) && isalarm(
+        (x, i) -> isvalid(x[i]) &&
+                      count(isvalid, x[1:i]) >= 5 &&
+                      x[i] <= 30 &&
+                      count(e -> e <= 30, last(filter(isvalid, x), 5)) >= 3,
+        df, :SleepQuality, cutoff, 4
+    )
+        return SleepQuality(df, Pair{String, Any}["SleepQualityDate" => cutoff])
+    end
 end
 
 function check_signal(::Type{EarlyAwakening}, df, cutoff)
-    return nothing
-
-    EarlyAwakening(df, Pair{String, Any}["EarlyAwakeningDate" => cutoff])
+    if last(df.IsA06) && isalarm(
+        (x, i) -> isvalid(x[i]) &&
+                      count(isvalid, x[1:i]) >= 5 &&
+                      x[i] <= Time("05:00") &&
+                      count(e -> e <= Time("05:00"), last(filter(isvalid, x), 3)) >= 3,
+        df, :WakeUp, cutoff, 4
+    )
+        return EarlyAwakening(df, Pair{String, Any}["EarlyAwakeningDate" => cutoff])
+    end
 end
 
 function check_signal(::Type{RemissionDepression}, df, cutoff)

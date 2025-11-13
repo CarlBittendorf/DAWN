@@ -98,6 +98,8 @@ function script()
             [:ChronoRecord, :ASRM5SumScore] => ByRow((c, s) -> isvalid(c) && ismissing(s) ? 0 : s) => :ASRM5SumScore
         )
 
+        transform([:FallAsleep, :WakeUp] => ByRow((a, w) -> isvalid(a) && isvalid(w) ? duration(a, w) : missing) => :SleepDuration)
+
         # add :City column
         transform(All() => ((x...) -> city) => :City)
 
