@@ -119,7 +119,7 @@ function script()
         ]
     )
 
-    send_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_S01[city], "CRC393 Compliance", html)
+    send_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_S01[city], "CRC393 Compliance $city", html)
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)

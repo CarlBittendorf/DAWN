@@ -88,7 +88,7 @@ function script()
         ]
     )
 
-    send_email(EMAIL_CREDENTIALS, EMAIL_COMPLIANCE, "CRC393 Compliance", html, [filename])
+    send_email(EMAIL_CREDENTIALS, EMAIL_COMPLIANCE, "CRC393 Compliance Overview", html, [filename])
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)
