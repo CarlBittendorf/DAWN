@@ -182,7 +182,7 @@ function send_email(credentials, receivers, subject, html, filenames = [])
     py"send_email"(credentials.server, credentials.login, credentials.password,
         credentials.sender, receivers, subject, html, filenames)
 
-    @info "Sent email to: " receivers
+    @info "Sent email." receivers
 end
 
 function send_error_email(credentials, receivers, message, filename)
