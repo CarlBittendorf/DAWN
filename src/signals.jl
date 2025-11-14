@@ -219,7 +219,9 @@ function check_signal(::Type{MissingIntenseSampling}, df, cutoff)
 end
 
 function check_signal(::Type{MissingQuestionsProblems}, df, cutoff)
-    if nrow(df) >= 1 && last(df.Date) == cutoff
+    if nrow(df) >= 1 &&
+       startswith(last(df.InteractionDesignerGroup), "C01") &&
+       last(df.Date) == cutoff
         missings = nrow(df) >= 2 && all(isnothing, last(df.ExerciseSuccessful, 2))
         problems = isvalid(last(df.TrainingProblems)) && last(df.TrainingProblems) != 0
         questions = isvalid(last(df.TrainingQuestions)) && last(df.TrainingQuestions) == 1
@@ -239,10 +241,12 @@ function check_signal(::Type{MissingQuestionsProblems}, df, cutoff)
 end
 
 function check_signal(::Type{MissingExercise}, df, cutoff)
-    if isalarm(
-        (x, i) -> count(isnothing, x[max(1, i - 1):i]) == 2 && isnothing(x[i]),
-        df, :ExerciseSuccessful, cutoff, 2
-    )
+    if nrow(df) >= 1 &&
+       contains(last(df.InteractionDesignerGroup), "B05/C03") &&
+       isalarm(
+           (x, i) -> count(isnothing, x[max(1, i - 1):i]) == 2 && isnothing(x[i]),
+           df, :ExerciseSuccessful, cutoff, 2
+       )
         return MissingExercise(df, Pair{String, Any}["MissingExerciseDate" => cutoff])
     end
 end
