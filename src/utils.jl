@@ -143,12 +143,15 @@ end
 time2hours(x) = hour(x) + minute(x) / 60
 
 function duration(a, b)
-    if a > b
+    x = Time(a)
+    y = Time(b)
+
+    if x > y
         # different days
-        return 24 - time2hours(a) + time2hours(b)
+        return 24 - time2hours(x) + time2hours(y)
     else
         # same day
-        return time2hours(b) - time2hours(a)
+        return time2hours(y) - time2hours(x)
     end
 end
 
