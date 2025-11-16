@@ -2,8 +2,7 @@
 abstract type AbstractSignal end
 
 const SIGNALS = [
-    :Initial, :InflectionDepression, :InflectionMania, :Expectation,
-    :StressfulLifeEvent, :MissingChronoRecord, :MissingMobileSensing,
+    :Initial, :InflectionDepression, :InflectionMania, :Expectation, :StressfulLifeEvent,
     :MissingIntenseSampling, :MissingQuestionsProblems, :MissingExercise,
     :SubstanceMore, :SocialInteractionMore, :Medication, :SleepDuration,
     :SleepQuality, :EarlyAwakening, :RemissionDepression, :SymptomRemission
@@ -141,51 +140,6 @@ function check_signal(::Type{StressfulLifeEvent}, df, cutoff)
         return StressfulLifeEvent(
             df,
             Pair{String, Any}["StressfulLifeEventDate" => only(df_sle.Date)]
-        )
-    end
-end
-
-function check_signal(::Type{MissingChronoRecord}, df, cutoff)
-    if isalarm(
-        (x, i) -> count(isnothing, x[max(1, i - 3):i]) >= 2 && isnothing(x[i]),
-        df, :ChronoRecord, cutoff, 4
-    )
-        indices = findall(isnothing, last(df.ChronoRecord, 4))
-        dates = last(df.Date, 4)[indices]
-        a04 = last_valid(df, :IsA04, false)
-        intense_sampling = last(df.NegativeEventIntensityMoment) isa Vector ||
-                           last(df.PercentSocialInteractions) isa Vector
-
-        return MissingChronoRecord(
-            df,
-            [
-                "MissingChronoRecordFirstDate" => dates[1],
-                "MissingChronoRecordSecondDate" => dates[2],
-                "MissingChronoRecordThirdDate" => length(dates) >= 3 ? dates[3] : missing,
-                "MissingChronoRecordFourthDate" => length(dates) == 4 ? dates[4] : missing,
-                "MissingChronoRecordA04" => a04,
-                "MissingChronoRecordIntenseSampling" => intense_sampling
-            ]
-        )
-    end
-end
-
-function check_signal(::Type{MissingMobileSensing}, df, cutoff)
-    if isalarm(
-        (x, i) -> count(.!x[max(1, i - 6):i]) == 7,
-        subset(df, :HasMobileSensing), :MobileSensingRunning, cutoff, 7
-    )
-        a04 = last_valid(df, :IsA04, false)
-        intense_sampling = last(df.NegativeEventIntensityMoment) isa Vector ||
-                           last(df.PercentSocialInteractions) isa Vector
-
-        return MissingMobileSensing(
-            df,
-            [
-                "MissingMobileSensingDate" => cutoff,
-                "MissingMobileSensingA04" => a04,
-                "MissingMobileSensingIntenseSampling" => intense_sampling
-            ]
         )
     end
 end
@@ -450,32 +404,6 @@ function receiver(x::StressfulLifeEvent)
 
     if x.city == "Dresden" && x.group == "B01"
         return EMAIL_DRESDEN_B01
-    end
-end
-
-function receiver(x::Union{MissingChronoRecord, MissingMobileSensing})
-    if x.city == "Marburg"
-        if x.group == "B01" && x.intense_sampling
-            return EMAIL_MARBURG_B01
-        else
-            return EMAIL_MARBURG_GENERAL
-        end
-    elseif x.city == "Münster"
-        if x.a04
-            return EMAIL_MÜNSTER_A04
-        elseif x.group == "B01" && x.intense_sampling
-            return EMAIL_MÜNSTER_B01
-        elseif startswith(x.group, "B05/C03") && x.intense_sampling
-            return EMAIL_MÜNSTER_C03
-        else
-            return EMAIL_MÜNSTER_S02
-        end
-    elseif x.city == "Dresden"
-        if x.group == "B01" && x.intense_sampling
-            return EMAIL_DRESDEN_B01
-        else
-            return EMAIL_DRESDEN_UKD
-        end
     end
 end
 
