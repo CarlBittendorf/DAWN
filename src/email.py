@@ -1,7 +1,7 @@
 from email.message import EmailMessage
-import smtplib, pathlib
+import smtplib, pathlib, mimetypes, os
 
-def send_email(server, login, password, sender, receivers, subject, html, filenames = []) -> None:
+def send_email(server, login, password, sender, receivers, subject, html, filenames = [], attachments = []) -> None:
     images = []
 
     for i, filename in enumerate(filenames):
@@ -25,6 +25,23 @@ def send_email(server, login, password, sender, receivers, subject, html, filena
 
     for image in images:
         message.add_related(image["data"], "image", image["extension"], cid=f'<{image["cid"]}>')
+
+    for attachment in attachments:
+        contenttype, encoding = mimetypes.guess_type(attachment)
+
+        if contenttype is None or encoding is not None:
+            # the file might be encoded (compressed)
+            contenttype = "application/octet-stream"
+        
+        maintype, subtype = contenttype.split('/', 1)
+
+        with open(attachment, "rb") as path:
+            message.add_attachment(
+                path.read(),
+                maintype = maintype,
+                subtype = subtype,
+                filename = os.path.basename(attachment)
+            )
 
     # send the email
     with smtplib.SMTP(server, 587) as server:

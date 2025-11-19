@@ -178,9 +178,9 @@ function make_html(title, content)
     )
 end
 
-function send_email(credentials, receivers, subject, html, filenames = [])
+function send_email(credentials, receivers, subject, html, filenames = [], attachments = [])
     py"send_email"(credentials.server, credentials.login, credentials.password,
-        credentials.sender, receivers, subject, html, filenames)
+        credentials.sender, receivers, subject, html, filenames, attachments)
 
     @info "Sent email." receivers
 end
