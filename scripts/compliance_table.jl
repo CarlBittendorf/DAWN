@@ -1,7 +1,7 @@
 include("../src/main.jl")
 
 function script()
-    index = parse(Int, only(ARGS))
+    index = parse(Int, ARGS[1])
     sc = STUDY_CENTERS[index]
 
     city = sc.name
@@ -97,29 +97,43 @@ function script()
         subset(:InteractionDesignerGroup => ByRow(x -> !contains(x, "Partner")))
 
         transform(:IsA04 => ByRow(x -> isvalid(x) ? x : false); renamecols = false)
-        transform("Is" .* projects => ByRow((x...) -> join(projects[[x...]], ", ")) => :Projects)
-
-        sort([:S01, :S01Total])
-
-        transform(
-            [:S01, :S01Total, :Sensing, :SensingTotal] .=>
-                ByRow(x -> ismissing(x) ? "-" : format_compliance(x));
-            renamecols = false
-        )
-
-        select(:Participant, :S01, :S01Total, :Sensing, :SensingTotal, :Projects)
+        transform("Is" .* projects => ByRow((x...) -> projects[[x...]]) => :Projects)
     end
 
-    html = make_html(
-        "Compliance",
-        [
-            make_title("Compliance"),
-            make_paragraph(""),
-            make_table(df)
-        ]
-    )
+    for (selection, email) in EMAIL_COMPLIANCE_TABLE[city]
+        df_project = @chain df begin
+            subset(:Projects => ByRow(x -> isempty(selection) || any(p -> p in selection, x)))
+            transform(:Projects => ByRow(x -> join(x, ", ")); renamecols = false)
 
-    send_email(EMAIL_CREDENTIALS, EMAIL_FEEDBACK_S01[city], "CRC393 Compliance $city", html)
+            sort([:S01, :S01Total])
+
+            transform(
+                [:S01, :S01Total, :Sensing, :SensingTotal] .=>
+                    ByRow(x -> ismissing(x) ? "-" : format_compliance(x));
+                renamecols = false
+            )
+
+            select(:Participant, :S01, :S01Total, :Sensing, :SensingTotal, :Projects)
+        end
+
+        if nrow(df_project) > 0
+            html = make_html(
+                "Compliance",
+                [
+                    make_title("Compliance"),
+                    make_paragraph(""),
+                    make_table(df_project)
+                ]
+            )
+
+            send_email(
+                EMAIL_CREDENTIALS,
+                [email, EMAIL_ADDITIONAL_RECEIVERS...],
+                "CRC393 Compliance $city",
+                html
+            )
+        end
+    end
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)

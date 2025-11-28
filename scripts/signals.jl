@@ -138,11 +138,16 @@ function script()
     ####################################################################################################
 
     signals = determine_signals(df_data, SIGNALS; cutoff = Date(now()) - Day(1))
-    receivers = receiver.(signals)
 
-    for email in unique(receivers)
+    receivers = @chain signals begin
+        @. receiver
+        vcat(_...)
+        unique
+    end
+
+    for email in receivers
         strings = @chain signals begin
-            filter(x -> receiver(x) == email, _)
+            filter(x -> email in receiver(x), _)
             @. format_signal
         end
 
