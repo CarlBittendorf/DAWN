@@ -42,7 +42,7 @@ const VARIABLES_DATABASE = [
     Variable("TrainingQuestions", "47a32b8e-41d4-4660-8b6a-1aac0ab17e2e", Int),
 
     # B05/C03
-    Variable("SocialContact", "b6c34383-81df-4628-8890-058c5e934355", Bool),
+    Variable("SocialContact", "b6c34383-81df-4628-8890-058c5e934355", Int),
     Variable("PercentSocialInteractions", "98a78237-4f14-4738-a0bf-25022c1ffa64", Int),
     Variable("ExerciseSuccessful", "68e88276-e419-49d5-b86f-d12210fec164", Int),
     Variable("ExerciseSuccessful", "b0791d6c-a53a-4432-8dda-3f257829b76e", Int),
