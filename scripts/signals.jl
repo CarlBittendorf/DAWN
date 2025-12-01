@@ -139,6 +139,8 @@ function script()
 
     signals = determine_signals(df_data, SIGNALS; cutoff = Date(now()) - Day(1))
 
+    upload_redcap_signals(REDCAP_API_TOKEN_1308, signals)
+
     receivers = @chain signals begin
         @. receiver
         vcat(_...)
@@ -147,19 +149,25 @@ function script()
 
     for email in receivers
         strings = @chain signals begin
-            filter(x -> email in receiver(x), _)
+            filter(
+                x -> email == receiver(x) ||
+                    (receiver(x) isa Vector && email in receiver(x)),
+                _
+            )
             @. format_signal
         end
 
         if email isa String
             send_signals_email(
-                EMAIL_CREDENTIALS, [email, EMAIL_ADDITIONAL_RECEIVERS...], city, strings)
+                EMAIL_CREDENTIALS,
+                [email, EMAIL_ADDITIONAL_RECEIVERS...],
+                city,
+                strings
+            )
         else
             send_signals_email(EMAIL_CREDENTIALS, EMAIL_ADDITIONAL_RECEIVERS, city, strings)
         end
     end
-
-    upload_redcap_signals(REDCAP_API_TOKEN_1308, signals)
 end
 
 run_script(script, EMAIL_CREDENTIALS, EMAIL_ERROR_RECEIVER)

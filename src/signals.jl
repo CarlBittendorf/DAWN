@@ -359,48 +359,48 @@ function check_signal(::Type{SymptomRemission}, df, cutoff)
 end
 
 function receiver(x::Initial)
-    x.city == "Marburg" && return [EMAIL_MARBURG_GENERAL]
-    x.city == "Münster" && return [EMAIL_MÜNSTER_S02]
-    x.city == "Dresden" && return [EMAIL_DRESDEN_UKD]
+    x.city == "Marburg" && return EMAIL_MARBURG_GENERAL
+    x.city == "Münster" && return EMAIL_MÜNSTER_S02
+    x.city == "Dresden" && return EMAIL_DRESDEN_UKD
 end
 
 function receiver(x::InflectionDepression)
-    x.city == "Marburg" && return [EMAIL_MARBURG_GENERAL]
-    x.city == "Münster" && return [EMAIL_MÜNSTER_A04]
+    x.city == "Marburg" && return EMAIL_MARBURG_GENERAL
+    x.city == "Münster" && return EMAIL_MÜNSTER_A04
 
     if x.city == "Dresden"
         if x.a06
-            return [EMAIL_DRESDEN_A06]
+            return EMAIL_DRESDEN_A06
         elseif x.study_center == "Dresden (FAL)"
-            return [EMAIL_DRESDEN_FAL]
+            return EMAIL_DRESDEN_FAL
         elseif x.study_center == "Dresden (UKD)"
-            return [EMAIL_DRESDEN_UKD]
+            return EMAIL_DRESDEN_UKD
         end
     end
 end
 
 function receiver(x::InflectionMania)
-    x.city == "Marburg" && return [EMAIL_MARBURG_GENERAL]
+    x.city == "Marburg" && return EMAIL_MARBURG_GENERAL
 
     if x.city == "Münster"
         if x.b07
-            return [EMAIL_MÜNSTER_B07]
+            return EMAIL_MÜNSTER_B07
         else
             return [EMAIL_MÜNSTER_B07, EMAIL_MÜNSTER_S02]
         end
     elseif x.city == "Dresden"
         if x.a06
-            return [EMAIL_DRESDEN_A06]
+            return EMAIL_DRESDEN_A06
         elseif x.study_center == "Dresden (FAL)"
-            return [EMAIL_DRESDEN_FAL]
+            return EMAIL_DRESDEN_FAL
         elseif x.study_center == "Dresden (UKD)"
-            return [EMAIL_DRESDEN_UKD]
+            return EMAIL_DRESDEN_UKD
         end
     end
 end
 
 function receiver(x::Expectation)
-    x.city == "Marburg" && return [EMAIL_MARBURG_B03]
+    x.city == "Marburg" && return EMAIL_MARBURG_B03
 end
 
 function receiver(x::StressfulLifeEvent)
@@ -413,44 +413,44 @@ function receiver(x::StressfulLifeEvent)
 end
 
 function receiver(x::MissingExercise)
-    x.city == "Marburg" && return [EMAIL_MARBURG_B05]
-    x.city == "Münster" && return [EMAIL_MÜNSTER_C03]
-    x.city == "Dresden" && return [EMAIL_DRESDEN_FAL]
+    x.city == "Marburg" && return EMAIL_MARBURG_B05
+    x.city == "Münster" && return EMAIL_MÜNSTER_C03
+    x.city == "Dresden" && return EMAIL_DRESDEN_FAL
 end
 
 function receiver(x::MissingIntenseSampling)
-    x.city == "Marburg" && return [EMAIL_MARBURG_B01]
+    x.city == "Marburg" && return EMAIL_MARBURG_B01
 
     if x.city == "Münster"
         if x.group == "B01" || startswith(x.group, "C01")
-            return [EMAIL_MÜNSTER_B01]
+            return EMAIL_MÜNSTER_B01
         elseif startswith(x.group, "B05/C03")
-            return [EMAIL_MÜNSTER_C03]
+            return EMAIL_MÜNSTER_C03
         end
     elseif x.city == "Dresden"
         if x.study_center == "Dresden (FAL)"
-            return [EMAIL_DRESDEN_FAL]
+            return EMAIL_DRESDEN_FAL
         elseif x.study_center == "Dresden (UKD)"
-            return [EMAIL_DRESDEN_UKD]
+            return EMAIL_DRESDEN_UKD
         end
     end
 end
 
 function receiver(x::MissingQuestionsProblems)
-    x.city == "Marburg" && return [EMAIL_MARBURG_GENERAL]
-    x.city == "Dresden" && return [EMAIL_DRESDEN_FAL]
+    x.city == "Marburg" && return EMAIL_MARBURG_GENERAL
+    x.city == "Dresden" && return EMAIL_DRESDEN_FAL
 end
 
 function receiver(x::Union{SubstanceMore, SocialInteractionMore, Medication,
         SleepDuration, SleepQuality, EarlyAwakening})
-    x.city == "Marburg" && return [EMAIL_MARBURG_A06]
-    x.city == "Dresden" && return [EMAIL_DRESDEN_A06]
+    x.city == "Marburg" && return EMAIL_MARBURG_A06
+    x.city == "Dresden" && return EMAIL_DRESDEN_A06
 end
 
 function receiver(x::Union{RemissionDepression, SymptomRemission})
-    x.city == "Marburg" && return [EMAIL_MARBURG_GENERAL]
-    x.city == "Münster" && return [EMAIL_MÜNSTER_A04]
-    x.city == "Dresden" && return [EMAIL_DRESDEN_UKD]
+    x.city == "Marburg" && return EMAIL_MARBURG_GENERAL
+    x.city == "Münster" && return EMAIL_MÜNSTER_A04
+    x.city == "Dresden" && return EMAIL_DRESDEN_UKD
 end
 
 function determine_signals(df, signals; cutoff = Date(now()) - Day(1))
