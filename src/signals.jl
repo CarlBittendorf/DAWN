@@ -404,10 +404,15 @@ function receiver(x::Expectation)
 end
 
 function receiver(x::StressfulLifeEvent)
-    x.city == "Marburg" && return [EMAIL_MARBURG_B01, EMAIL_MÜNSTER_LISA_LEEHR]
     x.city == "Münster" && return [EMAIL_MÜNSTER_B01, EMAIL_MÜNSTER_LISA_LEEHR]
 
-    if x.city == "Dresden" && x.group == "B01"
+    if x.city == "Marburg"
+        if x.group == "B01"
+            return [EMAIL_MARBURG_B01, EMAIL_MÜNSTER_LISA_LEEHR]
+        else
+            return EMAIL_MARBURG_B01
+        end
+    elseif x.city == "Dresden" && x.group == "B01"
         return [EMAIL_DRESDEN_B01, EMAIL_MÜNSTER_LISA_LEEHR]
     end
 end
