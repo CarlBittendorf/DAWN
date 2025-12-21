@@ -44,7 +44,10 @@ function script()
 
             # filter participants who finished a multiple of seven days of training
             groupby(:Participant)
-            subset(:Date => (x -> Dates.value(cutoff - minimum(x; init = cutoff)) in 7:7:56))
+            subset(
+                :Date => (x -> any(isequal(cutoff - Day(1)), x)),
+                :Date => (x -> Dates.value(cutoff - minimum(x; init = cutoff)) in 7:7:56)
+            )
 
             getproperty(:Participant)
             unique
@@ -54,19 +57,22 @@ function script()
             html = Hyperscript.Node[]
 
             for participant in participants
-                df_feedback = @chain begin
-                    subset(df, :Participant => ByRow(isequal(participant)))
+                df_feedback = @chain df begin
+                    subset(:Participant => ByRow(isequal(participant)))
 
-                    transform(:Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week)
+                    # use only C03 exercise days, not B05 intense sampling days
+                    groupby(:Date)
+                    subset(:Variable => (x -> any(x .== "ExerciseSuccessful")))
 
                     groupby(:Date)
                     combine(
-                        [:Variable, :Value] => ((v, x) -> any(v .== "ExerciseSuccessful" .& x .== "1")) => :Exercise,
-                        [:Variable, :Value] => ((v, x) -> count(v .== "MDMQContentMoment" .& .!ismissing.(x))) => :EMA;
+                        [:Variable, :Value] => ((v, x) -> any((v .== "ExerciseSuccessful") .& .!ismissing.(x) .& (x .!= "0"))) => :Exercise,
+                        [:Variable, :Value] => ((v, x) -> count((v .== "MDMQContentMoment") .& .!ismissing.(x))) => :EMA;
                         renamecols = false
                     )
 
                     transform(
+                        :Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week,
                         [:Exercise, :EMA] => ByRow((x, ema) -> x && ema >= 1) => :Compensation,
                         [:Exercise, :EMA] => ByRow((x, ema) -> x && ema >= 3) => :Complete
                     )
@@ -81,6 +87,7 @@ function script()
                     transform([:Compensation, :Bonus, :LastDay] => ByRow((c, b, l) -> l ? c + b : c) => :Compensation)
 
                     select(:Week, :Date, :Exercise, :EMA, :Compensation)
+                    sort(:Date)
 
                     push!(
                         _,
