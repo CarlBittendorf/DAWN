@@ -48,7 +48,7 @@ function script()
 
             # filter participants who finished 5, 7, or 14 days of B05 intense sampling two days ago
             groupby([:Participant, :Date])
-            subset(:Variable => (x -> count(isequal("PercentSocialInteractions"), x) >= 6))
+            subset(:Variable => (x -> count(isequal("PercentSocialInteractions"), x) == 4))
 
             groupby(:Participant)
             subset(
@@ -78,6 +78,7 @@ function script()
 
                 df_feedback = @chain df_participant begin
                     select(:Date, :Responded)
+                    sort(:Date)
 
                     push!(
                         _,
@@ -85,6 +86,7 @@ function script()
                         promote = true
                     )
                 end
+                println(df_feedback)
 
                 push!(
                     html,
