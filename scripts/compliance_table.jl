@@ -37,14 +37,25 @@ function script()
 
         subset(:Variable => ByRow(x -> x in ["ChronoRecord", "IsA04"]))
 
-        # replace missing with nothing to distinguish unanswered queries from those that were not asked
-        transform(All() .=> ByRow(x -> ismissing(x) ? nothing : x); renamecols = false)
-
-        unstack(:Variable, :Value; combine = first)
+        # remove leading white space
+        transform(
+            :Participant => ByRow(x -> isnothing(tryparse(Int, x)) ? x :
+                                       lpad(parse(Int, x), 4, "0"));
+            renamecols = false
+        )
 
         # entries before 05:30 are considered to belong to the previous day
         transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
         select(Not(:DateTime))
+
+        # reduce to one row per participant per day per variable
+        groupby([:Participant, :Date, :Variable])
+        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+
+        # replace missing with nothing to distinguish unanswered queries from those that were not asked
+        transform(All() .=> ByRow(x -> ismissing(x) ? nothing : x); renamecols = false)
+
+        unstack(:Variable, :Value; combine = first)
 
         # parse the values of each variable as its corresponding type
         transform(
@@ -52,10 +63,6 @@ function script()
             for (name, type) in ["ChronoRecord" => Int, "IsA04" => Bool])...;
             renamecols = false
         )
-
-        # reduce to one row per participant per day
-        groupby([:Participant, :Date])
-        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
 
         # use only participants who are still active
         groupby(:Participant)
