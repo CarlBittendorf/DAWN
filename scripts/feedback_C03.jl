@@ -110,7 +110,7 @@ function script()
 
             send_feedback_email(
                 EMAIL_CREDENTIALS,
-                EMAIL_FEEDBACK_B05_C03[city],
+                EMAIL_FEEDBACK_C03[city],
                 "C03",
                 html
             )
