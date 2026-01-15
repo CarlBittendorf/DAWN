@@ -92,7 +92,7 @@ function script()
                     html,
                     make_paragraph(
                         """$participant
-                        Number of completed B01 items: $items"""
+                        Number of completed B05 items: $items"""
                     ),
                     make_table(df_feedback)
                 )
