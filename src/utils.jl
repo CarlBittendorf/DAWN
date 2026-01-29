@@ -102,6 +102,14 @@ function fill_dates(df::DataFrame)
     end
 end
 
+function is_depressive_episode(code, characteristic)
+    any(x -> contains(code, x), CODES_DEPRESSION) && isequal(characteristic, "1")
+end
+
+function is_manic_episode(code, characteristic)
+    any(x -> contains(code, x), CODES_MANIA) && isequal(characteristic, "1")
+end
+
 function isalarm(condition::Function, df::DataFrame,
         variables::Vector{Symbol}, cutoff::Date, distance::Int)
     nrow(df) == 0 || last(df.Date) != cutoff && return false

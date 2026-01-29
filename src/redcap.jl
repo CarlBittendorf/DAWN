@@ -81,19 +81,25 @@ function process_redcap_diagnoses(json)
     @chain json begin
         DataFrame(
             :Participant => getindex.(_, "participant_id"),
-            :DIPSDate => getindex.(_, "dips_date"),
-            :DepressiveEpisode => getindex.(_, "hinweis_md_16"),
-            :ManicEpisode => getindex.(_, "hinweis_me_6"),
-            :DepressiveEpisodeValid => getindex.(_, "aaca2_major_depression_complete"),
-            :ManicEpisodeValid => getindex.(_, "bipolare_und_verwandte_strungen_complete")
+            :DIPSDate => getindex.(_, "date"),
+            :FirstCode => getindex.(_, "dsm_diagnosecodierung_1"),
+            :SecondCode => getindex.(_, "dsm_diagnosecodierung_2"),
+            :ThirdCode => getindex.(_, "dsm_diagnosecodierung_3"),
+            :FourthCode => getindex.(_, "dsm_diagnosecodierung_4"),
+            :FifthCode => getindex.(_, "dsm_diagnosecodierung_5"),
+            :FirstCharacteristic => getindex.(_, "dips_03a"),
+            :SecondCharacteristic => getindex.(_, "dips_03b"),
+            :ThirdCharacteristic => getindex.(_, "dips_03c"),
+            :FourthCharacteristic => getindex.(_, "dips_03d"),
+            :FifthCharacteristic => getindex.(_, "dips_03e")
         )
-        subset(
-            :DIPSDate => ByRow(!isequal("")),
-            [:DepressiveEpisodeValid, :ManicEpisodeValid] .=> ByRow(isequal("2"))
-        )
+        subset(:DIPSDate => ByRow(!isequal("")))
         transform(
             :DIPSDate => ByRow(x -> Date(x[1:10])),
-            [:DepressiveEpisode, :ManicEpisode] .=> ByRow(isequal("1"));
+            [:FirstCode, :SecondCode, :ThirdCode, :FourthCode, :FifthCode, :FirstCharacteristic, :SecondCharacteristic, :ThirdCharacteristic, :FourthCharacteristic, :FifthCharacteristic]
+            => ByRow((x...) -> any(map((code, characteristic) -> is_depressive_episode(code, characteristic), x[1:5], x[6:10]))) => :DepressiveEpisode,
+            [:FirstCode, :SecondCode, :ThirdCode, :FourthCode, :FifthCode, :FirstCharacteristic, :SecondCharacteristic, :ThirdCharacteristic, :FourthCharacteristic, :FifthCharacteristic]
+            => ByRow((x...) -> any(map((code, characteristic) -> is_manic_episode(code, characteristic), x[1:5], x[6:10]))) => :ManicEpisode;
             renamecols = false
         )
 
@@ -108,15 +114,21 @@ function download_redcap_diagnoses(token, participants)
             [
                 "records" => join(participants, ","),
                 "fields[0]" => "participant_id",
-                "fields[1]" => "dips_date",
-                "fields[2]" => "hinweis_md_16",
-                "fields[3]" => "hinweis_me_6",
-                "fields[4]" => "aaca2_major_depression_complete",
-                "fields[5]" => "bipolare_und_verwandte_strungen_complete"
+                "fields[1]" => "date",
+                "fields[2]" => "dsm_diagnosecodierung_1",
+                "fields[3]" => "dsm_diagnosecodierung_2",
+                "fields[4]" => "dsm_diagnosecodierung_3",
+                "fields[5]" => "dsm_diagnosecodierung_4",
+                "fields[6]" => "dsm_diagnosecodierung_5",
+                "fields[7]" => "dips_03a",
+                "fields[8]" => "dips_03b",
+                "fields[9]" => "dips_03c",
+                "fields[10]" => "dips_03d",
+                "fields[11]" => "dips_03e"
             ]
         )
 
-        process_redcap_diagnoses
+        process_redcap_dips
     end
 end
 

@@ -39,3 +39,28 @@ const DOMAIN_B_COLOR = colorant"#BF3E39"
 const DOMAIN_C_COLOR = colorant"#02738D"
 
 const PALETTE = [PRIMARY_COLOR, SECONDARY_COLOR, DOMAIN_A_COLOR, DOMAIN_B_COLOR]
+
+const CODES_DEPRESSION = [
+    # schizoaffective (depressive)
+    "F25.1", "295.70",
+
+    # bipolar (depressive)
+    "31.3", "31.4", "31.5", "31.6", "296.5",
+
+    # depression (first time)
+    "32.0", "32.1", "32.2", "32.3", "32.8", "32.9", "296.21", "296.22", "296.23", "296.24",
+
+    # depression (recurrent)
+    "33.0", "33.1", "33.2", "33.3", "33.8", "33.9", "296.31", "296.32", "296.33", "296.34"
+]
+
+const CODES_MANIA = [
+    # schizoaffective (manic)
+    "25.0", "295.70",
+
+    # mania
+    "30.0", "30.1", "30.2", "30.8", "30.9",
+
+    # bipolar (manic)
+    "31.0", "31.1", "31.2", "296.0"
+]
