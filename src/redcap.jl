@@ -128,7 +128,7 @@ function download_redcap_diagnoses(token, participants)
             ]
         )
 
-        process_redcap_dips
+        process_redcap_diagnoses
     end
 end
 
