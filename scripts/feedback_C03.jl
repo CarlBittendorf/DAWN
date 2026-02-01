@@ -73,7 +73,7 @@ function script()
 
                     transform(
                         :Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week,
-                        [:Exercise, :EMA] => ByRow((x, ema) -> x && ema >= 1) => :Compensation,
+                        [:Exercise, :EMA] => ByRow((x, ema) -> 0.5 * (x && ema >= 1)) => :Compensation,
                         [:Exercise, :EMA] => ByRow((x, ema) -> x && ema >= 2) => :Complete
                     )
 
