@@ -150,10 +150,7 @@ end
 
 time2hours(x) = hour(x) + minute(x) / 60
 
-function duration(a, b)
-    x = Time(a)
-    y = Time(b)
-
+function duration(x, y)
     if x > y
         # different days
         return 24 - time2hours(x) + time2hours(y)
