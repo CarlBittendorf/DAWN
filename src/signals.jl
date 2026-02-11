@@ -252,12 +252,12 @@ function check_signal(::Type{Medication}, df, cutoff)
         getproperty(:Medication)
     end
 
-    if length(medication) == 1 && isvalid(medication)
+    if length(medication) == 1 && isvalid(only(medication))
         return Medication(
             df,
             [
                 "MedicationDate" => cutoff,
-                "MedicationValue" => medication
+                "MedicationValue" => only(medication)
             ]
         )
     end
