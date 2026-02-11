@@ -238,7 +238,7 @@ function check_signal(::Type{SocialInteractionMore}, df, cutoff)
                 df,
                 [
                     "SocialInteractionMoreDate" => cutoff,
-                    "SocialInteractionMoreValue" => avg
+                    "SocialInteractionMoreValue" => round(avg; digits = 2)
                 ]
             )
         end
