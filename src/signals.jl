@@ -186,8 +186,8 @@ function check_signal(::Type{MissingQuestionsProblems}, df, cutoff)
                 [
                     "MissingQuestionsProblemsDate" => cutoff,
                     "MissingQuestionsProblemsMissing" => missings,
-                    "MissingQuestionsProblemsQuestions" => problems,
-                    "MissingQuestionsProblemsProblems" => questions
+                    "MissingQuestionsProblemsQuestions" => questions,
+                    "MissingQuestionsProblemsProblems" => problems
                 ]
             )
         end
