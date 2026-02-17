@@ -74,6 +74,21 @@ function script()
             for participant in unique(df.Participant)
                 df_participant = subset(df, :Participant => ByRow(isequal(participant)))
 
+                # determine whether this is the first or second intense sampling phase
+                phase = @chain begin
+                    # contains :Participant, :DateTime, :Variable and :Value columns
+                    read_dataframe(db, "queries")
+
+                    subset(
+                        :Participant => ByRow(isequal(participant)),
+                        :Variable => ByRow(isequal("NegativeEventIntensityMoment"))
+                    )
+
+                    getproperty(:DateTime)
+                    any(x -> x < cutoff - Month(1), _)
+                    _ ? "2" : "1"
+                end
+
                 items = first(df_participant.Items)
                 percentage = format_compliance(items / (73 * nrow(df_participant)))
 
@@ -97,6 +112,7 @@ function script()
                     html,
                     make_paragraph(
                         """$participant
+                        Phase: $phase
                         Number of completed B01 items: $items ($percentage%)"""
                     ),
                     make_table(df_feedback)
