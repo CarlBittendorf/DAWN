@@ -104,8 +104,7 @@ for sc in STUDY_CENTERS
 
         subset(
             :DateTime => ByRow(x -> x <= floor(now(), Day) + Hour(5) + Minute(30)),
-            :TriggerName => ByRow(x -> !(x in [
-                "Initialization", "ConfigurationUpdate", "RequestedInteraction"]))
+            :TriggerName => ByRow(x -> !(x in ["Initialization", "ConfigurationUpdate"]))
         )
 
         # convert inline strings to regular strings and remove quotation marks
