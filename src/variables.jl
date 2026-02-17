@@ -47,7 +47,8 @@ const VARIABLES_DATABASE = [
     Variable("ExerciseSuccessful", "68e88276-e419-49d5-b86f-d12210fec164", Int),
     Variable("ExerciseSuccessful", "b0791d6c-a53a-4432-8dda-3f257829b76e", Int),
     Variable("ExerciseSuccessful", "64698771-ebf8-4685-9056-e620f7b22f38", Int),
-    Variable("ExerciseSuccessful", "aa028d22-45f5-4c3e-b57f-92c8a10485fe", Int)
+    Variable("ExerciseSuccessful", "aa028d22-45f5-4c3e-b57f-92c8a10485fe", Int),
+    Variable("B05DayCounter", "d89f6622-51a7-405b-86eb-1d473feccee9", Int)
 ]
 
 const VARIABLE_GROUP = Variable(

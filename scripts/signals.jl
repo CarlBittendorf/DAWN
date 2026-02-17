@@ -99,10 +99,12 @@ function script()
         )
 
         transform(
-            [:FallAsleep, :WakeUp] .=> ByRow(x -> isvalid(x) ? Time(x) : missing);
+            [:FallAsleep, :WakeUp] .=> ByRow(x -> isvalid(x) ? Time(x) : nothing);
             renamecols = false
         )
-        transform([:FallAsleep, :WakeUp] => ByRow((a, w) -> isvalid(a) && isvalid(w) ? duration(a, w) : missing) => :SleepDuration)
+        transform([:FallAsleep, :WakeUp] => ByRow((a, w) -> isvalid(a) && isvalid(w) ? duration(a, w) : nothing) => :SleepDuration)
+
+        transform([:B05DayCounter, :ExerciseSuccessful] => ByRow((c, e) -> isvalid(c) && c >= 15 && c <= 70 && ismissing(e) ? nothing : e) => :ExerciseSuccessful)
 
         # add :City column
         transform(All() => ((x...) -> city) => :City)
