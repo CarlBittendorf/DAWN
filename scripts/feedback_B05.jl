@@ -86,7 +86,6 @@ function script()
                         promote = true
                     )
                 end
-                println(df_feedback)
 
                 push!(
                     html,
