@@ -158,9 +158,9 @@ function process_redcap_subprojects(json)
             :C02Included => getindex.(_, "c02_eingeschlossen"),
             :C02Finalized => getindex.(_, "c02_finalisiert"),
             :C02FinalizedDate => getindex.(_, "c02_finalisiert_date"),
-            :C03Included => getindex.(_, "c03_eingeschlossen"),
-            :C03Finalized => getindex.(_, "c03_finalisiert"),
-            :C03FinalizedDate => getindex.(_, "c03_finalisiert_date"),
+            :C03Included => getindex.(_, "b05_eingeschlossen"),
+            :C03Finalized => getindex.(_, "b05_finalisiert"),
+            :C03FinalizedDate => getindex.(_, "b05_finalisiert_date"),
             :C04Included => getindex.(_, "c04_eingeschlossen"),
             :C04Finalized => getindex.(_, "c04_finalisiert"),
             :C04FinalizedDate => getindex.(_, "c04_finalisiert_date")
@@ -202,12 +202,9 @@ function download_redcap_subprojects(token, participants)
                 "fields[20]" => "c02_eingeschlossen",
                 "fields[21]" => "c02_finalisiert",
                 "fields[22]" => "c02_finalisiert_date",
-                "fields[23]" => "c03_eingeschlossen",
-                "fields[24]" => "c03_finalisiert",
-                "fields[25]" => "c03_finalisiert_date",
-                "fields[26]" => "c04_eingeschlossen",
-                "fields[27]" => "c04_finalisiert",
-                "fields[28]" => "c04_finalisiert_date"
+                "fields[23]" => "c04_eingeschlossen",
+                "fields[24]" => "c04_finalisiert",
+                "fields[25]" => "c04_finalisiert_date"
             ]
         )
 
