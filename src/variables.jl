@@ -40,6 +40,7 @@ const VARIABLES_DATABASE = [
     Variable("TrainingSuccess", "8f71f2c4-611d-46f7-90b0-8c7954627eb0", Int),
     Variable("TrainingProblems", "e5219fbb-5227-430d-81d7-23b4989e86b3", Int),
     Variable("TrainingQuestions", "47a32b8e-41d4-4660-8b6a-1aac0ab17e2e", Int),
+    Variable("C01DayCounter", "a77152d5-2e72-4d00-8fcf-11bf1b3df54c", Int),
 
     # B05/C03
     Variable("SocialContact", "b6c34383-81df-4628-8890-058c5e934355", Int),

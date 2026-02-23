@@ -104,7 +104,10 @@ function script()
         )
         transform([:FallAsleep, :WakeUp] => ByRow((a, w) -> isvalid(a) && isvalid(w) ? duration(a, w) : nothing) => :SleepDuration)
 
-        transform([:B05DayCounter, :ExerciseSuccessful] => ByRow((c, e) -> isvalid(c) && c >= 15 && c <= 70 && ismissing(e) ? nothing : e) => :ExerciseSuccessful)
+        transform(
+            [:C01DayCounter, :TrainingSuccess] => ByRow((c, t) -> isvalid(c) && c >= 15 && c <= 70 && ismissing(t) ? nothing : t) => :TrainingSuccess,
+            [:B05DayCounter, :ExerciseSuccessful] => ByRow((c, e) -> isvalid(c) && c >= 15 && c <= 70 && ismissing(e) ? nothing : e) => :ExerciseSuccessful
+        )
 
         # add :City column
         transform(All() => ((x...) -> city) => :City)
