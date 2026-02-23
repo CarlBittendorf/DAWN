@@ -12,9 +12,10 @@ function script()
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
+    df_participants = read_dataframe(db, "participants")
+
     # determine participant uuids that are in C03
-    participantuuids = @chain begin
-        read_dataframe(db, "participants")
+    participantuuids = @chain df_participants begin
         subset(:InteractionDesignerGroup => ByRow(x -> contains(x, "C03")))
         getproperty(:InteractionDesignerParticipantUUID)
         unique
@@ -40,13 +41,13 @@ function script()
         end
 
         participants = @chain df begin
-            subset(:Variable => ByRow(isequal("ExerciseSuccessful")))
+            subset(:Variable => ByRow(isequal("B05DayCounter")))
 
             # filter participants who finished a multiple of seven days of training
             groupby(:Participant)
             subset(
                 :Date => (x -> any(isequal(cutoff - Day(1)), x)),
-                :Date => (x -> Dates.value(cutoff - minimum(x; init = cutoff)) in 7:7:56)
+                :Value => (x -> maximum(x; init = 0) in 21:7:70)
             )
 
             getproperty(:Participant)
@@ -57,49 +58,83 @@ function script()
             html = Hyperscript.Node[]
 
             for participant in participants
-                df_feedback = @chain df begin
+                group = @chain df_participants begin
+                    subset(:Participant => ByRow(isequal(participant)))
+                    getproperty(:InteractionDesignerGroup)
+                    only
+                end
+
+                df_participant = @chain df begin
                     subset(:Participant => ByRow(isequal(participant)))
 
                     # use only C03 exercise days, not B05 intense sampling days
                     groupby(:Date)
-                    subset(:Variable => (x -> any(x .== "ExerciseSuccessful")))
+                    subset([:Variable, :Value]
+                    => ((v, x) -> any((v .== "B05DayCounter") .& (x .>= 15) .&
+                                      (x .<= 70))))
+                end
 
-                    groupby(:Date)
-                    combine(
-                        [:Variable, :Value] => ((v, x) -> any((v .== "ExerciseSuccessful") .& .!ismissing.(x) .& (x .!= "0"))) => :Exercise,
-                        [:Variable, :Value] => ((v, x) -> count((v .== "MDMQContentMoment") .& .!ismissing.(x))) => :EMA;
-                        renamecols = false
-                    )
+                if group == "Partner B05/C03 Mindfulness"
+                    df_feedback = @chain df_participant begin
+                        groupby(:Date)
+                        combine([:Variable, :Value] => ((v, x) -> count((v .== "MDMQContentMoment") .& .!ismissing.(x))) => :EMA)
 
-                    transform(
-                        :Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week,
-                        [:Exercise, :EMA] => ByRow((x, ema) -> 0.5 * (x && ema >= 1)) => :Compensation,
-                        [:Exercise, :EMA] => ByRow((x, ema) -> x && ema >= 2) => :Complete
-                    )
+                        transform(
+                            :Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week,
+                            :Date => ByRow(x -> 0.0) => :Compensation
+                        )
 
-                    groupby(:Week)
-                    transform(
-                        :Complete => (x -> COMPENSATION_C03_EXERCISE[sum(x)]) => :Bonus,
-                        :Date => (x -> x .== maximum(x; init = cutoff - Year(1))) => :LastDay
-                    )
+                        select(:Week, :Date, :EMA, :Compensation)
+                        sort(:Date)
+                    end
 
-                    # add the bonus to the last day of the week
-                    transform([:Compensation, :Bonus, :LastDay] => ByRow((c, b, l) -> l ? c + b : c) => :Compensation)
-
-                    select(:Week, :Date, :Exercise, :EMA, :Compensation)
-                    sort(:Date)
+                    bonus = COMPENSATION_C03_PARTNER[
+                        round(Int, 100 * sum(df_feedback.EMA .>= 2) / 56)]
 
                     push!(
-                        _,
-                        ["Total", "", sum(_.Exercise), sum(_.EMA), sum(_.Compensation)];
+                        df_feedback,
+                        ["Total", "", sum(df_feedback.EMA), bonus];
                         promote = true
                     )
+                else
+                    df_feedback = @chain df_participant begin
+                        groupby(:Date)
+                        combine(
+                            [:Variable, :Value] => ((v, x) -> any((v .== "ExerciseSuccessful") .& .!ismissing.(x) .& (x .!= "0"))) => :Exercise,
+                            [:Variable, :Value] => ((v, x) -> count((v .== "MDMQContentMoment") .& .!ismissing.(x))) => :EMA
+                        )
 
-                    transform(
-                        :Compensation => ByRow(format_compensation);
-                        renamecols = false
-                    )
+                        transform(
+                            :Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week,
+                            [:Exercise, :EMA] => ByRow((x, ema) -> 0.5 * (x && ema >= 1)) => :Compensation,
+                            [:Exercise, :EMA] => ByRow((x, ema) -> x && ema >= 2) => :Complete
+                        )
+
+                        groupby(:Week)
+                        transform(
+                            :Complete => (x -> COMPENSATION_C03_EXERCISE[sum(x)]) => :Bonus,
+                            :Date => (x -> x .== maximum(x; init = cutoff - Year(1))) => :LastDay
+                        )
+
+                        # add the bonus to the last day of the week
+                        transform([:Compensation, :Bonus, :LastDay] => ByRow((c, b, l) -> l ? c + b : c) => :Compensation)
+
+                        select(:Week, :Date, :Exercise, :EMA, :Compensation)
+                        sort(:Date)
+
+                        push!(
+                            _,
+                            ["Total", "", sum(_.Exercise), sum(_.EMA), sum(_.Compensation)];
+                            promote = true
+                        )
+                    end
                 end
+
+                transform!(
+                    df_feedback,
+                    :Compensation => ByRow(format_compensation);
+                    renamecols = false
+                )
 
                 push!(
                     html,
