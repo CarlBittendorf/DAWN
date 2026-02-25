@@ -153,7 +153,7 @@ function check_signal(::Type{MissingIntenseSampling}, df, cutoff)
                 (x, i) -> x[i] isa Vector && length(x[i]) == 5 && all(isnothing, x[i]),
                 df, :NegativeEventIntensityMoment, cutoff, 2
             )
-        elseif startswith(group, "B05/C03")
+        elseif contains(group, "B05/C03")
             alarm = isalarm(
                 (x, y, i) -> x[i] isa Vector && length(x[i]) == 6 &&
                                  all(isnothing, x[i]) && isnothing(y[i]),
@@ -418,25 +418,37 @@ function receiver(x::StressfulLifeEvent)
 end
 
 function receiver(x::MissingExercise)
-    x.city == "Marburg" && return EMAIL_MARBURG_B05
+    x.city == "Marburg" && return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03]
     x.city == "Münster" && return EMAIL_MÜNSTER_C03
-    x.city == "Dresden" && return EMAIL_DRESDEN_FAL
+    x.city == "Dresden" && return [EMAIL_DRESDEN_FAL, EMAIL_MÜNSTER_C03]
 end
 
 function receiver(x::MissingIntenseSampling)
-    x.city == "Marburg" && return EMAIL_MARBURG_B01
-
-    if x.city == "Münster"
+    if x.city == "Marburg"
+        if contains(x.group, "B05/C03")
+            return [EMAIL_MARBURG_B01, EMAIL_MÜNSTER_C03]
+        else
+            return EMAIL_MARBURG_B01
+        end
+    elseif x.city == "Münster"
         if x.group == "B01" || startswith(x.group, "C01")
             return EMAIL_MÜNSTER_B01
-        elseif startswith(x.group, "B05/C03")
+        elseif contains(x.group, "B05/C03")
             return EMAIL_MÜNSTER_C03
         end
     elseif x.city == "Dresden"
         if x.study_center == "Dresden (FAL)"
-            return EMAIL_DRESDEN_FAL
+            if contains(x.group, "B05/C03")
+                return [EMAIL_DRESDEN_FAL, EMAIL_MÜNSTER_C03]
+            else
+                return EMAIL_DRESDEN_FAL
+            end
         elseif x.study_center == "Dresden (UKD)"
-            return EMAIL_DRESDEN_UKD
+            if contains(x.group, "B05/C03")
+                return [EMAIL_DRESDEN_UKD, EMAIL_MÜNSTER_C03]
+            else
+                return EMAIL_DRESDEN_UKD
+            end
         end
     end
 end
