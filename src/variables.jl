@@ -188,11 +188,10 @@ const VARIABLE_C01_INTENSE_SAMPLING = Variable(
     Int
 )
 
-const VARIABLE_C01_TRAINING = Variable(
-    "TrainingSuccess",
-    "8f71f2c4-611d-46f7-90b0-8c7954627eb0",
-    Int
-)
+const VARIABLES_C01_TRAINING = [
+    Variable("TrainingSuccess", "8f71f2c4-611d-46f7-90b0-8c7954627eb0", Int),
+    Variable("C01DayCounter", "a77152d5-2e72-4d00-8fcf-11bf1b3df54c", Int)
+]
 
 const VARIABLES_C03_INTERVENTION = [
     Variable("ExerciseSuccessful", "68e88276-e419-49d5-b86f-d12210fec164", Int),

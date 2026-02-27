@@ -83,67 +83,79 @@ function script()
                 token,
                 studyuuid,
                 participantuuids,
-                [VARIABLE_C01_TRAINING];
+                VARIABLES_C01_TRAINING;
                 cutofftime = DateTime(cutoff) + Day(1) + Hour(5) + Minute(30),
                 hoursinpast = 56 * 24
             )
 
             # entries before 05:30 are considered to belong to the previous day
-            transform(
-                :DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date;
-                renamecols = false
-            )
+            transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
+        end
 
-            # coalesce in case a variable was created multiple times in one day
-            groupby([:Participant, :Date])
-            combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+        participants = @chain df begin
+            subset(:Variable => ByRow(isequal("C01DayCounter")))
 
             # filter participants who finished two, four, six or eight weeks of training
             groupby(:Participant)
-            subset(:Date => (x -> Dates.value(cutoff - minimum(x; init = cutoff)) in [
-                14, 28, 42, 56]))
+            subset(
+                :Date => (x -> any(isequal(cutoff - Day(1)), x)),
+                :Value => (x -> maximum(x; init = 0) in 28:14:70)
+            )
 
-            groupby(:Participant)
-            transform(:Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week)
-
-            # for each week, calculate the number of days the participant trained
-            groupby([:Participant, :Week])
-            combine(:Value => (x -> count(!ismissing, x)) => :Responded)
-
-            transform(:Responded => ByRow(x -> COMPENSATION_C01_TRAINING[x]) => :Compensation)
-
-            # calculate the compensation across all weeks so far
-            groupby(:Participant)
-            transform(:Compensation => sum => :TotalCompensation)
-
-            sort([:Participant, :Week])
-
-            # select the last two weeks of each participant
-            groupby([:Participant, :Week])
-            subset(:Week => (x -> x .>= maximum(x; init = 8) - 1))
+            getproperty(:Participant)
+            unique
         end
 
-        if nrow(df) > 0
-            feedback = @chain df begin
-                groupby(:Participant)
-                combine(
-                    :Week => format_weeks => :Weeks,
-                    :Compensation => (x -> format_compensation(first(x))) => :FirstWeek,
-                    :Compensation => (x -> format_compensation(last(x))) => :SecondWeek,
-                    :Compensation => (x -> format_compensation(sum(x))) => :Sum,
-                    :Responded => (x -> format_compliance(sum(x) / 14)) => :Compliance,
-                    :TotalCompensation => first;
+        if !isempty(participants)
+            html = Hyperscript.Node[]
+
+            for participant in participants
+                df_feedback = @chain df begin
+                    subset(:Participant => ByRow(isequal(participant)))
+
+                    # use only C01 training days, not C01 intense sampling days
+                    groupby(:Date)
+                    subset([:Variable, :Value]
+                    => ((v, x) -> any((v .== "C01DayCounter") .& (x .>= 15) .& (x .<= 70))))
+
+                    groupby(:Date)
+                    combine([:Variable, :Value] => ((v, x) -> any((v .== "TrainingSuccess") .& .!ismissing.(x))) => :Training)
+
+                    transform(:Date => (x -> floor.(Int, Dates.value.(x .- minimum(x; init = cutoff)) ./ 7) .+ 1) => :Week)
+
+                    # for each week, calculate the number of days the participant trained
+                    groupby(:Week)
+                    combine(:Training => count => :Responded)
+
+                    transform(:Responded => ByRow(x -> COMPENSATION_C01_TRAINING[x]) => :Compensation)
+
+                    sort(:Week)
+                end
+
+                push!(
+                    df_feedback,
+                    ["Total", sum(df_feedback.Responded), sum(df_feedback.Compensation)];
+                    promote = true
+                )
+
+                transform!(
+                    df_feedback,
+                    :Compensation => ByRow(format_compensation);
                     renamecols = false
                 )
 
-                make_table
+                push!(
+                    html,
+                    make_paragraph(participant),
+                    make_table(df_feedback)
+                )
             end
 
             send_feedback_email(
                 EMAIL_CREDENTIALS,
                 EMAIL_FEEDBACK_C01[city],
                 "C01",
-                Hyperscript.Node[feedback]
+                html
             )
         end
     end
