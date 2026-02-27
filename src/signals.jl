@@ -177,7 +177,7 @@ function check_signal(::Type{MissingQuestionsProblems}, df, cutoff)
        startswith(last(df.InteractionDesignerGroup), "C01") &&
        last(df.Date) == cutoff
         missings = nrow(df) >= 2 && all(isnothing, last(df.TrainingSuccess, 2))
-        problems = isvalid(last(df.TrainingProblems)) && last(df.TrainingProblems) != 0
+        problems = isvalid(last(df.TrainingProblems)) && last(df.TrainingProblems) != 1
         questions = isvalid(last(df.TrainingQuestions)) && last(df.TrainingQuestions) == 1
 
         if any([missings, problems, questions])
