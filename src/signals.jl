@@ -197,6 +197,7 @@ end
 function check_signal(::Type{MissingExercise}, df, cutoff)
     if nrow(df) >= 1 &&
        contains(last(df.InteractionDesignerGroup), "B05/C03") &&
+       last(df.InteractionDesignerGroup) != "Partner B05/C03 Mindfulness" &&
        isalarm(
            (x, i) -> count(isnothing, x[max(1, i - 1):i]) == 2 && isnothing(x[i]),
            df, :ExerciseSuccessful, cutoff, 2
