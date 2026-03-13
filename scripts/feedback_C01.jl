@@ -55,7 +55,7 @@ function script()
             )
 
             groupby([:Participant, :Date])
-            combine(:Value => (x -> count(!missing, x)) => :Responded)
+            combine(:Value => (x -> count(!ismissing, x)) => :Responded)
 
             groupby(:Participant)
             combine(
