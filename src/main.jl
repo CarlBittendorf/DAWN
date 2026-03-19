@@ -42,10 +42,10 @@ const PALETTE = [PRIMARY_COLOR, SECONDARY_COLOR, DOMAIN_A_COLOR, DOMAIN_B_COLOR]
 
 const CODES_DEPRESSION = [
     # schizoaffective (depressive)
-    "F25.1", "295.70",
+    "25.1", "295.70",
 
     # bipolar (depressive)
-    "31.3", "31.4", "31.5", "31.6", "296.5",
+    "31.3", "31.4", "31.5", "31.6", "31.8", "296.5",
 
     # depression (first time)
     "32.0", "32.1", "32.2", "32.3", "32.8", "32.9", "296.21", "296.22", "296.23", "296.24",
