@@ -419,15 +419,13 @@ function receiver(x::StressfulLifeEvent)
 end
 
 function receiver(x::MissingExercise)
-    x.city == "Marburg" && return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03]
-    x.city == "Münster" && return EMAIL_MÜNSTER_C03
-    x.city == "Dresden" && return [EMAIL_DRESDEN_FAL, EMAIL_MÜNSTER_C03]
+    return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
 end
 
 function receiver(x::MissingIntenseSampling)
     if x.city == "Marburg"
         if contains(x.group, "B05/C03")
-            return [EMAIL_MARBURG_B01, EMAIL_MÜNSTER_C03]
+            return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
         else
             return EMAIL_MARBURG_B01
         end
@@ -435,18 +433,18 @@ function receiver(x::MissingIntenseSampling)
         if x.group == "B01" || startswith(x.group, "C01")
             return EMAIL_MÜNSTER_B01
         elseif contains(x.group, "B05/C03")
-            return EMAIL_MÜNSTER_C03
+            return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
         end
     elseif x.city == "Dresden"
         if x.study_center == "Dresden (FAL)"
             if contains(x.group, "B05/C03")
-                return [EMAIL_DRESDEN_FAL, EMAIL_MÜNSTER_C03]
+                return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
             else
                 return EMAIL_DRESDEN_FAL
             end
         elseif x.study_center == "Dresden (UKD)"
             if contains(x.group, "B05/C03")
-                return [EMAIL_DRESDEN_UKD, EMAIL_MÜNSTER_C03]
+                return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
             else
                 return EMAIL_DRESDEN_UKD
             end
