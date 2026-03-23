@@ -155,7 +155,7 @@ function check_signal(::Type{MissingIntenseSampling}, df, cutoff)
             )
         elseif contains(group, "B05/C03")
             alarm = isalarm(
-                (x, y, i) -> x[i] isa Vector && length(x[i]) == 6 &&
+                (x, y, i) -> x[i] isa Vector && length(x[i]) == 4 &&
                                  all(isnothing, x[i]) && isnothing(y[i]),
                 df, [:PercentSocialInteractions, :SocialContact], cutoff, 2
             )
