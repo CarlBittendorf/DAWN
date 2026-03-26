@@ -108,6 +108,6 @@ in the project directory.
 
 ## Acknowledgements
 
-Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – GRK2739/1 – Project Nr. 447089431 – Research Training Group: KD²School – Designing Adaptive Systems for Economic Decisions
+Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – GRK2739/2 – Project Nr. 447089431 – Research Training Group: KD²School – Designing Biosignal-Adaptive Systems for Decision-Making Processes
 
 Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – CRC393 – Project Nr. 521379614 – Trajectories of Affective Disorders: Cognitive-Emotional Mechanisms of Symptom Change
