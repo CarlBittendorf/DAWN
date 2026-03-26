@@ -1,5 +1,5 @@
 
-function start_logging(filename, minlevel = MiniLoggers.Info)
+function start_logging(filename, minlevel = MiniLoggers.Debug)
     MiniLogger(
         io = filename;
         errlevel = MiniLoggers.AboveMaxLevel,
