@@ -178,6 +178,9 @@ function script()
     # QUERIES
     ####################################################################################################
 
+    # workaround to avoid SSL errors
+    sleep(10)
+
     participantuuids = unique(df_participants.InteractionDesignerParticipantUUID)
 
     df_queries = @chain begin
