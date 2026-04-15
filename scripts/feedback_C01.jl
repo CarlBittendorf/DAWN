@@ -89,7 +89,7 @@ function script()
             )
 
             # entries before 05:30 are considered to belong to the previous day
-            transform(:DateTime => ByRow(x -> Time(x) <= Time("05:30") ? Date(x) - Day(1) : Date(x)) => :Date)
+            transform([:Variable, :DateTime] => ByRow((v, d) -> v != "C01DayCounter" && Time(d) <= Time("05:30") ? Date(d) - Day(1) : Date(d)) => :Date)
         end
 
         participants = @chain df begin
