@@ -18,6 +18,8 @@ function format_weeks(x)
     end
 end
 
+format_fields(fields) = map(i -> "fields[$(i-1)]" => fields[i], eachindex(fields))
+
 function format_signal(x)
     s = x.participant * " (" * x.study_center * ", " * x.group * "): " * string(typeof(x)) *
         "\n"
@@ -57,6 +59,16 @@ function last_valid(df, x, default)
 end
 
 lastdays(df, x, cutoff) = subset(df, :Date => ByRow(d -> d > cutoff - Day(x)))
+
+function clean_participant_id(x)
+    value = tryparse(Int, x)
+
+    if isnothing(value)
+        return x
+    else
+        return lpad(string(value), 4, '0')
+    end
+end
 
 function clean_movisensxs_id(x)
     value = tryparse(Int, x)
@@ -104,6 +116,10 @@ end
 
 function is_depressive_episode(code, characteristic)
     any(x -> contains(code, x), CODES_DEPRESSION) && isequal(characteristic, "1")
+end
+
+function is_dysthymia(code, characteristic)
+    any(x -> contains(code, x), CODES_DYSTHYMIA) && isequal(characteristic, "1")
 end
 
 function is_manic_episode(code, characteristic)

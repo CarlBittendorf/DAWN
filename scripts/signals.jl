@@ -48,6 +48,8 @@ function script()
         # remove test accounts
         subset(:Participant => ByRow(x -> !(x in TEST_ACCOUNTS)))
 
+        transform(:Participant => ByRow(clean_participant_id); renamecols = false)
+
         # replace missing with nothing to distinguish unanswered queries from those that were not asked
         transform(All() .=> ByRow(x -> ismissing(x) ? nothing : x); renamecols = false)
 
