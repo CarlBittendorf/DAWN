@@ -61,7 +61,7 @@ function script()
                 group = @chain df_participants begin
                     subset(:Participant => ByRow(isequal(participant)))
                     getproperty(:InteractionDesignerGroup)
-                    only
+                    first
                 end
 
                 df_participant = @chain df begin
