@@ -9,7 +9,7 @@ include("types.jl")
 include("../secrets.jl")
 
 using Chain, DataFrames, MiniLoggers, DuckDB, PyCall, HTTP, JSON, CSV, XML, ZipFile,
-      Hyperscript, AlgebraOfGraphics, CairoMakie
+      TimeZones, Hyperscript, AlgebraOfGraphics, CairoMakie
 using Dates, Statistics, Printf
 
 @pyinclude("src/email.py")
@@ -56,6 +56,8 @@ const CODES_DEPRESSION = [
     # depression (recurrent)
     "33.0", "33.1", "33.2", "33.3", "33.8", "33.9", "296.31", "296.32", "296.33", "296.34"
 ]
+
+const CODES_DYSTHYMIA = ["34.1", "300.4"]
 
 const CODES_MANIA = [
     # schizoaffective (manic)

@@ -12,14 +12,14 @@ function script()
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
     # bearer token, which is valid for five minutes
-    token = download_interaction_designer_token(username, password, clientsecret)
+    bearer_token = download_interaction_designer_token(username, password, clientsecret)
 
     ####################################################################################################
     # PARTICIPANTS AND MOVISENSXS
     ####################################################################################################
 
     # all current participant uuids in the InteractionDesigner
-    participantuuids = download_interaction_designer_participants(token, studyuuid)
+    participantuuids = download_interaction_designer_participants(bearer_token, studyuuid)
 
     # participants in the database
     df_participants = @chain begin
@@ -41,7 +41,7 @@ function script()
     # download information about new participants
     for participantuuid in new
         json = download_interaction_designer_participant_data(
-            token,
+            bearer_token,
             studyuuid,
             participantuuid
         )
@@ -55,7 +55,7 @@ function script()
     # account for group changes
     df_group = @chain begin
         download_interaction_designer_variable_values(
-            token,
+            bearer_token,
             studyuuid,
             participantuuids,
             [VARIABLE_GROUP];
@@ -75,10 +75,9 @@ function script()
         dropmissing
     end
 
-    df_movisensxs = download_redcap_movisensxs(
-        REDCAP_API_TOKEN_1376,
-        unique(df_participants.Participant)
-    )
+    participants = unique(df_participants.Participant)
+
+    df_movisensxs = download_and_process_redcap(REDCapMovisensXS, participants)
 
     df_centers = @chain df_movisensxs begin
         groupby(:Participant)
@@ -136,7 +135,7 @@ function script()
 
     participants = unique(df_participants.Participant)
 
-    df_diagnoses = download_redcap_diagnoses(REDCAP_API_TOKEN_1362, participants)
+    df_diagnoses = download_and_process_redcap(REDCapS02Baseline, participants)
 
     # update diagnoses database
     create_or_replace_diagnoses_database(db)
@@ -151,7 +150,7 @@ function script()
     sleep(10)
 
     df_subprojects = @chain begin
-        download_redcap_subprojects(REDCAP_API_TOKEN_1401, participants)
+        download_and_process_redcap(REDCapSubprojects, participants)
 
         transform(
             [:A06Included, :A06Finalized] => ByRow((i, f) -> i && !f) => :IsA06,
@@ -185,7 +184,7 @@ function script()
 
     df_queries = @chain begin
         download_interaction_designer_variable_values(
-            token,
+            bearer_token,
             studyuuid,
             participantuuids,
             VARIABLES_DATABASE;

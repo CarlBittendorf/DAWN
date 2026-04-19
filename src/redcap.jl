@@ -1,4 +1,389 @@
 
+####################################################################################################
+# INTERFACE DOCUMENTATION
+####################################################################################################
+
+# This code provides a typed interface to multiple REDCap projects, allowing project-specific
+# configuration (API token, exported fields, and post‑processing) while sharing a common API
+# request mechanism.
+
+# Each project is represented by a concrete Julia type and should implement the following functions:
+
+# token(::Type{<:AbstractREDCapProject})
+# fields(::Type{<:AbstractREDCapProject})
+# process(::Type{<:AbstractREDCapProject}, json)
+
+####################################################################################################
+# GENERIC DEFINITIONS
+####################################################################################################
+
+abstract type AbstractREDCapProject end
+
+"""
+    token(::Type{<:AbstractREDCapProject}) -> String
+
+Return the REDCap API token for a given project type.
+"""
+function token end
+
+"""
+    fields(::Type{<:AbstractREDCapProject}) -> Vector{String}
+
+Return the list of REDCap field names to be exported for a given project type.
+"""
+function fields end
+
+"""
+    process(::Type{<:AbstractREDCapProject}, json) -> DataFrame
+
+Transform raw JSON records returned by the REDCap API into a cleaned `DataFrame`.
+
+Each concrete project implements its own processing logic.
+"""
+function process end
+
+process(T::Type{<:AbstractREDCapProject}) = json -> process(T, json)
+
+####################################################################################################
+# CONCRETE IMPLEMENTATIONS
+####################################################################################################
+
+struct REDCapSignals <: AbstractREDCapProject end
+struct REDCapS02Baseline <: AbstractREDCapProject end
+struct REDCapMovisensXS <: AbstractREDCapProject end
+struct REDCapSubprojects <: AbstractREDCapProject end
+struct REDCapClarification <: AbstractREDCapProject end
+
+token(::Type{REDCapSignals}) = REDCAP_API_TOKEN_1308
+token(::Type{REDCapS02Baseline}) = REDCAP_API_TOKEN_1362
+token(::Type{REDCapMovisensXS}) = REDCAP_API_TOKEN_1376
+token(::Type{REDCapSubprojects}) = REDCAP_API_TOKEN_1401
+token(::Type{REDCapClarification}) = REDCAP_API_TOKEN_1553
+
+function fields(::Type{REDCapS02Baseline})
+    [
+        "participant_id",
+        "date",
+        "dsm_diagnosecodierung_1",
+        "dsm_diagnosecodierung_2",
+        "dsm_diagnosecodierung_3",
+        "dsm_diagnosecodierung_4",
+        "dsm_diagnosecodierung_5",
+        "dips_03a",
+        "dips_03b",
+        "dips_03c",
+        "dips_03d",
+        "dips_03e"
+    ]
+end
+
+function fields(::Type{REDCapMovisensXS})
+    [
+        "participant_id",
+        "movisensid",
+        "standort",
+        "standort_dd",
+        "date_movisense_id"
+    ]
+end
+
+function fields(::Type{REDCapSubprojects})
+    [
+        "participant_id",
+        "a06_eingeschlossen",
+        "a06_eingeschlossen_date",
+        "a06_finalisiert",
+        "a06_finalisiert_date",
+        "b01_eingeschlossen",
+        "b01_finalisiert",
+        "b01_finalisiert_date",
+        "b03_eingeschlossen",
+        "b03_finalisiert",
+        "b03_finalisiert_date",
+        "b05_eingeschlossen",
+        "b05_finalisiert",
+        "b05_finalisiert_date",
+        "b07_eingeschlossen",
+        "b07_finalisiert",
+        "b07_finalisiert_date",
+        "c01_eingeschlossen",
+        "c01_finalisiert",
+        "c01_finalisiert_date",
+        "c02_eingeschlossen",
+        "c02_finalisiert",
+        "c02_finalisiert_date",
+        "c04_eingeschlossen",
+        "c04_finalisiert",
+        "c04_finalisiert_date"
+    ]
+end
+
+function fields(::Type{REDCapClarification})
+    [
+        "participant_id",
+        "is_typ",
+        "inflection_depression_first_value",
+        "inflection_depression_second_value",
+        "inflection_depression_first_date",
+        "inflection_depression_second_date",
+        "inflection_mania_first_value",
+        "inflection_mania_second_value",
+        "inflection_mania_first_date",
+        "inflection_mania_second_date",
+        "is_abklaerung_date",
+        "interviewerin",
+        "prb_erreicht",
+        "is_telefonkontakt",
+        "is_kein_telefonkontakt",
+        "prb_teilnahme",
+        "instanz_schliessen",
+        "instanz_schliessen_manie",
+        "is_ausschluss",
+        "date02",
+        "hamd_sum17",
+        "sighads_hamd_complete",
+        "date03",
+        "ymrs_sum",
+        "ymrs_complete",
+        "dips_erreicht_is",
+        "date_diagnosis_is",
+        "dsm_diagnosecodierung_1_is",
+        "dsm_diagnosecodierung_2_is",
+        "dsm_diagnosecodierung_3_is",
+        "dsm_diagnosecodierung_4_is",
+        "dsm_diagnosecodierung_5_is",
+        "dips_03a_is",
+        "dips_03b_is",
+        "dips_03c_is",
+        "dips_03d_is",
+        "dips_03e_is",
+        "dips_psychstoerung_is"
+    ]
+end
+
+function process(::Type{REDCapS02Baseline}, json)
+    @chain json begin
+        DataFrame
+        rename(
+            :participant_id => :Participant,
+            :date => :DIPSDate
+        )
+
+        subset(:DIPSDate => ByRow(!isequal("")))
+        transform(
+            :DIPSDate => ByRow(x -> Date(x[1:10])),
+            [
+                [:dsm_diagnosecodierung_1, :dips_03a],
+                [:dsm_diagnosecodierung_2, :dips_03b],
+                [:dsm_diagnosecodierung_3, :dips_03c],
+                [:dsm_diagnosecodierung_4, :dips_03d],
+                [:dsm_diagnosecodierung_5, :dips_03e]
+            ] .=> ByRow(is_depressive_episode) .=> [:DE1, :DE2, :DE3, :DE4, :DE5],
+            [
+                [:dsm_diagnosecodierung_1, :dips_03a],
+                [:dsm_diagnosecodierung_2, :dips_03b],
+                [:dsm_diagnosecodierung_3, :dips_03c],
+                [:dsm_diagnosecodierung_4, :dips_03d],
+                [:dsm_diagnosecodierung_5, :dips_03e]
+            ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
+            renamecols = false
+        )
+        transform(
+            [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
+            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
+        )
+
+        select(:Participant, :DIPSDate, :DepressiveEpisode, :ManicEpisode)
+    end
+end
+
+function process(::Type{REDCapMovisensXS}, json)
+    @chain json begin
+        DataFrame
+        rename(
+            :participant_id => :Participant,
+            :movisensid => :MovisensXSParticipantID,
+            :standort => :Location,
+            :standort_dd => :LocationDresden,
+            :redcap_repeat_instance => :Instance,
+            :movisensid_timestamp => :EntryCreatedDateTime,
+            :date_movisense_id => :AssignmentDate
+        )
+
+        transform(
+            :EntryCreatedDateTime => ByRow(x -> x == "[not completed]" ? "" : x);
+            renamecols = false
+        )
+        transform(
+            :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x)),
+            :MovisensXSParticipantID => ByRow(clean_movisensxs_id),
+            [:Location, :LocationDresden] => ByRow(clean_study_center) => :StudyCenter,
+            :EntryCreatedDateTime => ByRow(x -> x == "" ? missing : Date(x[1:10])),
+            :AssignmentDate => ByRow(x -> x == "" ? missing : Date(x));
+            renamecols = false
+        )
+        transform([:EntryCreatedDateTime, :AssignmentDate] => ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
+
+        select(:Participant, :MovisensXSParticipantID,
+            :Instance, :AssignmentDate, :StudyCenter)
+    end
+end
+
+function process(::Type{REDCapSubprojects}, json)
+    names = [
+        :Participant,
+        :A06Included, :A06IncludedDate, :A06Finalized, :A06FinalizedDate,
+        :B01Included, :B01Finalized, :B01FinalizedDate,
+        :B03Included, :B03Finalized, :B03FinalizedDate,
+        :B05Included, :B05Finalized, :B05FinalizedDate,
+        :B07Included, :B07Finalized, :B07FinalizedDate,
+        :C01Included, :C01Finalized, :C01FinalizedDate,
+        :C02Included, :C02Finalized, :C02FinalizedDate,
+        :C03Included, :C03Finalized, :C03FinalizedDate,
+        :C04Included, :C04Finalized, :C04FinalizedDate
+    ]
+
+    @chain json begin
+        DataFrame
+        rename(fields(REDCapSubprojects) .=>
+            filter(x -> !contains(string(x), "C03"), names))
+
+        transform(
+            :B05Included => identity => :C03Included,
+            :B05Finalized => identity => :C03Finalized,
+            :B05FinalizedDate => identity => :C03FinalizedDate
+        )
+        transform(
+            Cols(x -> endswith(x, r"Included|Finalized")) .=> ByRow(isequal("1")),
+            Cols(endswith("Date")) .=> ByRow(x -> x != "" ? Date(x[1:10]) : missing);
+            renamecols = false
+        )
+
+        select(names)
+    end
+end
+
+function process(::Type{REDCapClarification}, json)
+    @chain json begin
+        DataFrame
+        rename(
+            :participant_id => :Participant,
+            :redcap_repeat_instance => :Instance,
+            :inflection_depression_first_value => :InflectionDepressionFirstValue,
+            :inflection_depression_second_value => :InflectionDepressionSecondValue,
+            :inflection_depression_first_date => :InflectionDepressionFirstDate,
+            :inflection_depression_second_date => :InflectionDepressionSecondDate,
+            :inflection_mania_first_value => :InflectionManiaFirstValue,
+            :inflection_mania_second_value => :InflectionManiaSecondValue,
+            :inflection_mania_first_date => :InflectionManiaFirstDate,
+            :inflection_mania_second_date => :InflectionManiaSecondDate,
+            :is_abklaerung_date => :TelephoneDate,
+            :interviewerin => :TelephoneInterviewer,
+            :prb_erreicht => :TelephoneReached,
+            :is_telefonkontakt => :TelephoneNotes,
+            :prb_teilnahme => :Participation,
+            :is_ausschluss => :Exclusion,
+            :instanz_schliessen => :CloseInstanceDepression,
+            :instanz_schliessen_manie => :CloseInstanceMania,
+            :hamd_sum17 => :HAMD,
+            :date02 => :HAMDDate,
+            :ymrs_sum => :YMRS,
+            :date03 => :YMRSDate,
+            :dips_erreicht_is => :DIPSReached,
+            :date_diagnosis_is => :DIPSDate,
+            :dips_psychstoerung_is => :PsychiatricDisorder
+        )
+        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
+
+        groupby([:Participant, :Instance])
+        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+
+        transform(
+            [
+                :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
+                :InflectionManiaFirstDate, :InflectionManiaSecondDate,
+                :TelephoneDate, :HAMDDate, :YMRSDate, :DIPSDate
+            ] .=> ByRow(x -> ismissing(x) ? x : Date(x[1:10])),
+            [
+                :InflectionDepressionFirstValue, :InflectionDepressionSecondValue,
+                :InflectionManiaFirstValue, :InflectionManiaSecondValue,
+                :HAMD, :YMRS
+            ] .=> ByRow(x -> ismissing(x) ? x : parse(Int, x)),
+            [
+                :TelephoneReached, :Participation, :Exclusion,
+                :CloseInstanceDepression, :CloseInstanceMania,
+                :DIPSReached, :PsychiatricDisorder
+            ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
+            [
+                [:dsm_diagnosecodierung_1_is, :dips_03a_is],
+                [:dsm_diagnosecodierung_2_is, :dips_03b_is],
+                [:dsm_diagnosecodierung_3_is, :dips_03c_is],
+                [:dsm_diagnosecodierung_4_is, :dips_03d_is],
+                [:dsm_diagnosecodierung_5_is, :dips_03e_is]
+            ] .=>
+                ByRow((c, x) -> ismissing(c) ? c : is_depressive_episode(c, x)) .=>
+                    [:DE1, :DE2, :DE3, :DE4, :DE5],
+            [
+                [:dsm_diagnosecodierung_1_is, :dips_03a_is],
+                [:dsm_diagnosecodierung_2_is, :dips_03b_is],
+                [:dsm_diagnosecodierung_3_is, :dips_03c_is],
+                [:dsm_diagnosecodierung_4_is, :dips_03d_is],
+                [:dsm_diagnosecodierung_5_is, :dips_03e_is]
+            ] .=>
+                ByRow((c, x) -> ismissing(c) ? c : is_dysthymia(c, x)) .=>
+                    [:DY1, :DY2, :DY3, :DY4, :DY5],
+            [
+                [:dsm_diagnosecodierung_1_is, :dips_03a_is],
+                [:dsm_diagnosecodierung_2_is, :dips_03b_is],
+                [:dsm_diagnosecodierung_3_is, :dips_03c_is],
+                [:dsm_diagnosecodierung_4_is, :dips_03d_is],
+                [:dsm_diagnosecodierung_5_is, :dips_03e_is]
+            ] .=>
+                ByRow((c, x) -> ismissing(c) ? c : is_manic_episode(c, x)) .=>
+                    [:ME1, :ME2, :ME3, :ME4, :ME5];
+            renamecols = false
+        )
+        transform(
+            [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
+            [:DY1, :DY2, :DY3, :DY4, :DY5] => ByRow((x...) -> any(x)) => :Dysthymia,
+            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
+        )
+        transform(
+            [
+            [:DepressiveEpisode, :PsychiatricDisorder],
+            [:Dysthymia, :PsychiatricDisorder],
+            [:ManicEpisode, :PsychiatricDisorder]
+        ] .=>
+            ByRow((x, d) -> !ismissing(d) && ismissing(x) ? false : x) .=>
+                [:DepressiveEpisode, :Dysthymia, :ManicEpisode]
+        )
+
+        select(
+            :Participant,
+            :InflectionDepressionFirstValue, :InflectionDepressionSecondValue,
+            :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
+            :InflectionManiaFirstValue, :InflectionManiaSecondValue,
+            :InflectionManiaFirstDate, :InflectionManiaSecondDate,
+            :TelephoneDate, :TelephoneReached, :TelephoneInterviewer, :TelephoneNotes,
+            :Participation, :Exclusion, :CloseInstanceDepression, :CloseInstanceMania,
+            :HAMD, :HAMDDate, :YMRS, :YMRSDate,
+            :DIPSDate, :DIPSReached, :DepressiveEpisode, :Dysthymia,
+            :ManicEpisode, :PsychiatricDisorder
+        )
+    end
+end
+
+####################################################################################################
+# HIGH-LEVEL FUNCTIONS
+####################################################################################################
+
+"""
+    redcap_api_request(token, parameters)
+
+Send a raw POST request to the REDCap API.
+
+Returns parsed JSON on success, or `nothing` if the request fails.
+"""
 function redcap_api_request(token, parameters)
     response = HTTP.post(
         "https://redcap.zih.tu-dresden.de/redcap/api/";
@@ -27,243 +412,32 @@ function redcap_api_request(token, parameters)
     end
 end
 
-function process_redcap_movisensxs(json)
-    @chain json begin
-        DataFrame(
-            :Participant => getindex.(_, "participant_id"),
-            :MovisensXSParticipantID => getindex.(_, "movisensid"),
-            :Location => getindex.(_, "standort"),
-            :LocationDresden => getindex.(_, "standort_dd"),
-            :Instance => getindex.(_, "redcap_repeat_instance"),
-            :FirstAssignmentDate => getindex.(_, "movisensid_timestamp"),
-            :SecondAssignmentDate => getindex.(_, "date_movisense_id")
-        )
+"""
+    download_redcap(T::Type{<:AbstractREDCapProject}, participants)
 
-        transform(
-            :FirstAssignmentDate => ByRow(x -> x == "[not completed]" ? "" : x);
-            renamecols = false
-        )
-        transform(
-            :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x)),
-            :MovisensXSParticipantID => ByRow(clean_movisensxs_id),
-            [:Location, :LocationDresden] => ByRow(clean_study_center) => :StudyCenter,
-            :FirstAssignmentDate => ByRow(x -> x == "" ? missing : Date(x[1:10])),
-            :SecondAssignmentDate => ByRow(x -> x == "" ? missing : Date(x));
-            renamecols = false
-        )
-        transform([:FirstAssignmentDate, :SecondAssignmentDate] => ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
+Request REDCap records for a given project `T` and list of participant IDs.
 
-        select(:Participant, :MovisensXSParticipantID,
-            :Instance, :AssignmentDate, :StudyCenter)
-    end
+Automatically:
+- selects project-specific fields
+- applies the correct API token
+
+Returns parsed JSON suitable for `process`.
+"""
+function download_redcap(T::Type{<:AbstractREDCapProject}, participants)
+    parameters = [
+        "exportSurveyFields" => "true",
+        "records" => join(participants, ","),
+        format_fields(fields(T))...
+    ]
+
+    return redcap_api_request(token(T), parameters)
 end
 
-function download_redcap_movisensxs(token, participants)
-    @chain begin
-        redcap_api_request(
-            token,
-            [
-                "records" => join(participants, ","),
-                "fields[0]" => "participant_id",
-                "fields[1]" => "movisensid",
-                "fields[2]" => "standort",
-                "fields[3]" => "standort_dd",
-                "fields[4]" => "date_movisense_id",
-                "exportSurveyFields" => "true"
-            ]
-        )
-
-        process_redcap_movisensxs
-    end
+function download_and_process_redcap(T::Type{<:AbstractREDCapProject}, participants)
+    return process(T, download_redcap(T, participants))
 end
 
-function process_redcap_diagnoses(json)
-    @chain json begin
-        DataFrame(
-            :Participant => getindex.(_, "participant_id"),
-            :DIPSDate => getindex.(_, "date"),
-            :FirstCode => getindex.(_, "dsm_diagnosecodierung_1"),
-            :SecondCode => getindex.(_, "dsm_diagnosecodierung_2"),
-            :ThirdCode => getindex.(_, "dsm_diagnosecodierung_3"),
-            :FourthCode => getindex.(_, "dsm_diagnosecodierung_4"),
-            :FifthCode => getindex.(_, "dsm_diagnosecodierung_5"),
-            :FirstCharacteristic => getindex.(_, "dips_03a"),
-            :SecondCharacteristic => getindex.(_, "dips_03b"),
-            :ThirdCharacteristic => getindex.(_, "dips_03c"),
-            :FourthCharacteristic => getindex.(_, "dips_03d"),
-            :FifthCharacteristic => getindex.(_, "dips_03e")
-        )
-        subset(:DIPSDate => ByRow(!isequal("")))
-        transform(
-            :DIPSDate => ByRow(x -> Date(x[1:10])),
-            [:FirstCode, :SecondCode, :ThirdCode, :FourthCode, :FifthCode, :FirstCharacteristic, :SecondCharacteristic, :ThirdCharacteristic, :FourthCharacteristic, :FifthCharacteristic]
-            => ByRow((x...) -> any(map((code, characteristic) -> is_depressive_episode(code, characteristic), x[1:5], x[6:10]))) => :DepressiveEpisode,
-            [:FirstCode, :SecondCode, :ThirdCode, :FourthCode, :FifthCode, :FirstCharacteristic, :SecondCharacteristic, :ThirdCharacteristic, :FourthCharacteristic, :FifthCharacteristic]
-            => ByRow((x...) -> any(map((code, characteristic) -> is_manic_episode(code, characteristic), x[1:5], x[6:10]))) => :ManicEpisode;
-            renamecols = false
-        )
-
-        select(:Participant, :DIPSDate, :DepressiveEpisode, :ManicEpisode)
-    end
-end
-
-function download_redcap_diagnoses(token, participants)
-    @chain begin
-        redcap_api_request(
-            token,
-            [
-                "records" => join(participants, ","),
-                "fields[0]" => "participant_id",
-                "fields[1]" => "date",
-                "fields[2]" => "dsm_diagnosecodierung_1",
-                "fields[3]" => "dsm_diagnosecodierung_2",
-                "fields[4]" => "dsm_diagnosecodierung_3",
-                "fields[5]" => "dsm_diagnosecodierung_4",
-                "fields[6]" => "dsm_diagnosecodierung_5",
-                "fields[7]" => "dips_03a",
-                "fields[8]" => "dips_03b",
-                "fields[9]" => "dips_03c",
-                "fields[10]" => "dips_03d",
-                "fields[11]" => "dips_03e"
-            ]
-        )
-
-        process_redcap_diagnoses
-    end
-end
-
-function process_redcap_subprojects(json)
-    @chain json begin
-        DataFrame(
-            :Participant => getindex.(_, "participant_id"),
-            :A06Included => getindex.(_, "a06_eingeschlossen"),
-            :A06IncludedDate => getindex.(_, "a06_eingeschlossen_date"),
-            :A06Finalized => getindex.(_, "a06_finalisiert"),
-            :A06FinalizedDate => getindex.(_, "a06_finalisiert_date"),
-            :B01Included => getindex.(_, "b01_eingeschlossen"),
-            :B01Finalized => getindex.(_, "b01_finalisiert"),
-            :B01FinalizedDate => getindex.(_, "b01_finalisiert_date"),
-            :B03Included => getindex.(_, "b03_eingeschlossen"),
-            :B03Finalized => getindex.(_, "b03_finalisiert"),
-            :B03FinalizedDate => getindex.(_, "b03_finalisiert_date"),
-            :B05Included => getindex.(_, "b05_eingeschlossen"),
-            :B05Finalized => getindex.(_, "b05_finalisiert"),
-            :B05FinalizedDate => getindex.(_, "b05_finalisiert_date"),
-            :B07Included => getindex.(_, "b07_eingeschlossen"),
-            :B07Finalized => getindex.(_, "b07_finalisiert"),
-            :B07FinalizedDate => getindex.(_, "b07_finalisiert_date"),
-            :C01Included => getindex.(_, "c01_eingeschlossen"),
-            :C01Finalized => getindex.(_, "c01_finalisiert"),
-            :C01FinalizedDate => getindex.(_, "c01_finalisiert_date"),
-            :C02Included => getindex.(_, "c02_eingeschlossen"),
-            :C02Finalized => getindex.(_, "c02_finalisiert"),
-            :C02FinalizedDate => getindex.(_, "c02_finalisiert_date"),
-            :C03Included => getindex.(_, "b05_eingeschlossen"),
-            :C03Finalized => getindex.(_, "b05_finalisiert"),
-            :C03FinalizedDate => getindex.(_, "b05_finalisiert_date"),
-            :C04Included => getindex.(_, "c04_eingeschlossen"),
-            :C04Finalized => getindex.(_, "c04_finalisiert"),
-            :C04FinalizedDate => getindex.(_, "c04_finalisiert_date")
-        )
-        transform(
-            Cols(x -> x != "Participant" && !endswith(x, "Date")) .=> ByRow(isequal("1")),
-            Cols(endswith("Date")) .=> ByRow(x -> x != "" ? Date(x[1:10]) : missing);
-            renamecols = false
-        )
-    end
-end
-
-function download_redcap_subprojects(token, participants)
-    @chain begin
-        redcap_api_request(
-            token,
-            [
-                "records" => join(participants, ","),
-                "fields[0]" => "participant_id",
-                "fields[1]" => "a06_eingeschlossen",
-                "fields[2]" => "a06_eingeschlossen_date",
-                "fields[3]" => "a06_finalisiert",
-                "fields[4]" => "a06_finalisiert_date",
-                "fields[5]" => "b01_eingeschlossen",
-                "fields[6]" => "b01_finalisiert",
-                "fields[7]" => "b01_finalisiert_date",
-                "fields[8]" => "b03_eingeschlossen",
-                "fields[9]" => "b03_finalisiert",
-                "fields[10]" => "b03_finalisiert_date",
-                "fields[11]" => "b05_eingeschlossen",
-                "fields[12]" => "b05_finalisiert",
-                "fields[13]" => "b05_finalisiert_date",
-                "fields[14]" => "b07_eingeschlossen",
-                "fields[15]" => "b07_finalisiert",
-                "fields[16]" => "b07_finalisiert_date",
-                "fields[17]" => "c01_eingeschlossen",
-                "fields[18]" => "c01_finalisiert",
-                "fields[19]" => "c01_finalisiert_date",
-                "fields[20]" => "c02_eingeschlossen",
-                "fields[21]" => "c02_finalisiert",
-                "fields[22]" => "c02_finalisiert_date",
-                "fields[23]" => "c04_eingeschlossen",
-                "fields[24]" => "c04_finalisiert",
-                "fields[25]" => "c04_finalisiert_date"
-            ]
-        )
-
-        process_redcap_subprojects
-    end
-end
-
-function upload_redcap_signal(token, participant, signalname, parameters)
-    if signalname in ["inflection_depression", "inflection_mania"]
-        forms = ["forms[1]" => "inflection_depression", "forms[2]" => "inflection_mania"]
-        instruments = ["inflection_depression", "inflection_mania"]
-    else
-        forms = ["forms[1]" => signalname]
-        instruments = [signalname]
-    end
-
-    # determine the last instance of the signal
-    # for the two inflection signals, the highest overall is taken
-    instance = @chain begin
-        redcap_api_request(
-            token,
-            [
-                "records" => participant,
-                "forms[0]" => "initial",
-                forms...
-            ]
-        )
-        filter(x -> x["redcap_repeat_instrument"] in instruments, _)
-        getindex.("redcap_repeat_instance")
-        maximum(; init = 0)
-    end
-
-    # upload the signal
-    data = Dict(
-        "participant_id" => participant,
-        "redcap_repeat_instrument" => signalname,
-        "redcap_repeat_instance" => string(instance + 1),
-        parameters...,
-        signalname * "_log_date" => Dates.format(now(), "yyyy-mm-dd HH:MM:SS"),
-        signalname * "_complete" => "2"
-    )
-
-    response = redcap_api_request(
-        token,
-        [
-            "overwriteBehavior" => "overwrite",
-            "data" => JSON.json([data]),
-            "returnContent" => "ids"
-        ]
-    )
-
-    if only(response) == participant
-        @info "Uploaded $(snake2camelcase(signalname)) signal for participant $participant." data
-    else
-        @error "An error occured when trying to upload a signal for participant $participant." data response
-    end
-end
-
-function upload_redcap_signals(token, signals)
+function upload_redcap(project::Type{REDCapSignals}, signals)
     function preprocess(value)
         x = string(value)
 
@@ -281,6 +455,56 @@ function upload_redcap_signals(token, signals)
         variablevalues = preprocess.(last.(signal.data))
         parameters = [name => value for (name, value) in zip(variablenames, variablevalues)]
 
-        upload_redcap_signal(token, signal.participant, signalname, parameters)
+        if signalname in ["inflection_depression", "inflection_mania"]
+            forms = [
+                "forms[1]" => "inflection_depression", "forms[2]" => "inflection_mania"]
+            instruments = ["inflection_depression", "inflection_mania"]
+        else
+            forms = ["forms[1]" => signalname]
+            instruments = [signalname]
+        end
+
+        # determine the last instance of the signal
+        # for the two inflection signals, the highest overall is taken
+        instance = @chain begin
+            redcap_api_request(
+                token(project),
+                [
+                    "records" => participant,
+                    "forms[0]" => "initial",
+                    forms...
+                ]
+            )
+            filter(x -> x["redcap_repeat_instrument"] in instruments, _)
+            getindex.("redcap_repeat_instance")
+            maximum(; init = 0)
+        end
+
+        logdate = Dates.format(now(tz"Europe/Berlin"), "yyyy-mm-dd HH:MM:SS")
+
+        # upload the signal
+        data = Dict(
+            "participant_id" => participant,
+            "redcap_repeat_instrument" => signalname,
+            "redcap_repeat_instance" => string(instance + 1),
+            parameters...,
+            signalname * "_log_date" => logdate,
+            signalname * "_complete" => "2"
+        )
+
+        response = redcap_api_request(
+            token(project),
+            [
+                "overwriteBehavior" => "overwrite",
+                "data" => JSON.json([data]),
+                "returnContent" => "ids"
+            ]
+        )
+
+        if only(response) == participant
+            @info "Uploaded $(snake2camelcase(signalname)) signal for participant $participant." data
+        else
+            @error "An error occured when trying to upload a signal for participant $participant." data response
+        end
     end
 end

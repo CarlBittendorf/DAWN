@@ -152,7 +152,7 @@ function script()
 
     signals = determine_signals(df_data, SIGNALS; cutoff = Date(now()) - Day(1))
 
-    upload_redcap_signals(REDCAP_API_TOKEN_1308, signals)
+    upload_redcap(REDCapSignals, signals)
 
     receivers = @chain signals begin
         @. receiver
