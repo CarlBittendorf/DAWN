@@ -98,6 +98,12 @@ The following lines run the update, signal and feedback scripts daily and the co
 00 9 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_figure.jl'
 ```
 
+This line frees up disk space once a week:
+
+```plain
+00 1 * * 1 bash -l -c 'sudo apt-get autoremove --purge && sudo apt-get clean && sudo journalctl --vacuum-time=3d'
+```
+
 To update to the latest version of DAWN, run
 
 ```terminal
