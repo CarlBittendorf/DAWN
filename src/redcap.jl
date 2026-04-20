@@ -464,6 +464,8 @@ function upload_redcap(project::Type{REDCapSignals}, signals)
             instruments = [signalname]
         end
 
+        participant = signal.participant
+
         # determine the last instance of the signal
         # for the two inflection signals, the highest overall is taken
         instance = @chain begin
