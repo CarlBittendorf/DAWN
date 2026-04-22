@@ -359,7 +359,7 @@ function process(::Type{REDCapClarification}, json)
         )
 
         select(
-            :Participant,
+            :Participant, :Instance,
             :InflectionDepressionFirstValue, :InflectionDepressionSecondValue,
             :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
             :InflectionManiaFirstValue, :InflectionManiaSecondValue,
