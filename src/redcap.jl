@@ -137,7 +137,9 @@ function fields(::Type{REDCapClarification})
         "is_kein_telefonkontakt",
         "prb_teilnahme",
         "instanz_schliessen",
+        "datum_instanz_schliessen_depression",
         "instanz_schliessen_manie",
+        "datum_instanz_schliessen_manie",
         "is_ausschluss",
         "date02",
         "hamd_sum17",
@@ -157,7 +159,8 @@ function fields(::Type{REDCapClarification})
         "dips_03c_is",
         "dips_03d_is",
         "dips_03e_is",
-        "dips_psychstoerung_is"
+        "dips_psychstoerung_is",
+        "episode_is"
     ]
 end
 
@@ -284,14 +287,17 @@ function process(::Type{REDCapClarification}, json)
             :prb_teilnahme => :Participation,
             :is_ausschluss => :Exclusion,
             :instanz_schliessen => :CloseInstanceDepression,
+            :datum_instanz_schliessen_depression => :CloseInstanceDepressionDate,
             :instanz_schliessen_manie => :CloseInstanceMania,
+            :datum_instanz_schliessen_manie => :CloseInstanceManiaDate,
             :hamd_sum17 => :HAMD,
             :date02 => :HAMDDate,
             :ymrs_sum => :YMRS,
             :date03 => :YMRSDate,
             :dips_erreicht_is => :DIPSReached,
             :date_diagnosis_is => :DIPSDate,
-            :dips_psychstoerung_is => :PsychiatricDisorder
+            :dips_psychstoerung_is => :PsychiatricDisorder,
+            :episode_is => :Episode
         )
         transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
 
@@ -302,6 +308,7 @@ function process(::Type{REDCapClarification}, json)
             [
                 :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
                 :InflectionManiaFirstDate, :InflectionManiaSecondDate,
+                :CloseInstanceDepressionDate, :CloseInstanceManiaDate,
                 :TelephoneDate, :HAMDDate, :YMRSDate, :DIPSDate
             ] .=> ByRow(x -> ismissing(x) ? x : Date(x[1:10])),
             [
@@ -312,7 +319,7 @@ function process(::Type{REDCapClarification}, json)
             [
                 :TelephoneReached, :Participation, :Exclusion,
                 :CloseInstanceDepression, :CloseInstanceMania,
-                :DIPSReached, :PsychiatricDisorder
+                :DIPSReached, :PsychiatricDisorder, :Episode
             ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
             [
                 [:dsm_diagnosecodierung_1_is, :dips_03a_is],
@@ -365,10 +372,11 @@ function process(::Type{REDCapClarification}, json)
             :InflectionManiaFirstValue, :InflectionManiaSecondValue,
             :InflectionManiaFirstDate, :InflectionManiaSecondDate,
             :TelephoneDate, :TelephoneReached, :TelephoneInterviewer, :TelephoneNotes,
-            :Participation, :Exclusion, :CloseInstanceDepression, :CloseInstanceMania,
+            :Participation, :Exclusion,
+            :CloseInstanceDepression, :CloseInstanceDepressionDate, :CloseInstanceMania, :CloseInstanceManiaDate,
             :HAMD, :HAMDDate, :YMRS, :YMRSDate,
-            :DIPSDate, :DIPSReached, :DepressiveEpisode, :Dysthymia,
-            :ManicEpisode, :PsychiatricDisorder
+            :DIPSDate, :DIPSReached, :PsychiatricDisorder, :Episode,
+            :DepressiveEpisode, :Dysthymia, :ManicEpisode
         )
     end
 end
