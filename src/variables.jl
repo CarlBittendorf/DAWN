@@ -31,6 +31,8 @@ const VARIABLES_DATABASE = [
     Variable("SubstanceMore", "d864251b-ab40-4785-b520-7e2bb5933d39", Int),
     Variable(
         "ExpectationMentalHealthProblems", "e4301b15-1f77-49c3-bdf3-eaa42cf20128", Int),
+    Variable("Inpatient", "1c3aaa4b-9f0b-43f6-a492-e6709b3a9b43", Int),
+    Variable("SickLeave", "71c7e3be-d217-47c3-b4ed-f445bdce128a", Int),
     Variable("IsA04", "b6ef4e98-c75f-4a37-8aab-e32c6cb212fd", Bool),
 
     # B01
