@@ -135,7 +135,16 @@ function script()
 
     participants = unique(df_participants.Participant)
 
-    df_diagnoses = download_and_process_redcap(REDCapS02Baseline, participants)
+    df_baseline = download_and_process_redcap(REDCapS02Baseline, participants)
+
+    df_clarification = @chain begin
+        download_and_process_redcap(REDCapClarification, participants)
+
+        select(:Participant, :DIPSDate, :DepressiveEpisode, :ManicEpisode)
+        dropmissing
+    end
+
+    df_diagnoses = vcat(df_baseline, df_clarification)
 
     # update diagnoses database
     create_or_replace_diagnoses_database(db)
