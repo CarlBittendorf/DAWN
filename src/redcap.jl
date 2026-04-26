@@ -42,8 +42,6 @@ Each concrete project implements its own processing logic.
 """
 function process end
 
-process(T::Type{<:AbstractREDCapProject}) = json -> process(T, json)
-
 ####################################################################################################
 # CONCRETE IMPLEMENTATIONS
 ####################################################################################################
