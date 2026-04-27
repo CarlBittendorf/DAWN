@@ -96,6 +96,8 @@ The following lines run the update, signal and feedback scripts daily and the co
 35 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_table.jl 2'
 40 8 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_table.jl 3'
 00 9 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/compliance_figure.jl'
+05 9 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/clarification.jl'
+10 9 * * 1 bash -l -c 'cd /home/ubuntu/DAWN && julia --project scripts/quality.jl'
 ```
 
 This line frees up disk space once a week:
