@@ -1,4 +1,4 @@
-using Pkg
+using Pkg, Dates
 
 if isfile("Project.toml") && isfile("Manifest.toml")
     Pkg.activate(".")
@@ -10,7 +10,7 @@ include("../secrets.jl")
 
 using Chain, DataFrames, MiniLoggers, DuckDB, PyCall, HTTP, JSON, CSV, XML, ZipFile,
       TimeZones, Hyperscript, AlgebraOfGraphics, CairoMakie
-using Dates, Statistics, Printf
+using Statistics, Printf
 
 @pyinclude("src/email.py")
 
