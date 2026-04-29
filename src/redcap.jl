@@ -1,4 +1,9 @@
 
+# 1. Interface Documentation
+# 2. Generic Definitions
+# 3. Concrete Implementations
+# 4. High-level Functions
+
 ####################################################################################################
 # INTERFACE DOCUMENTATION
 ####################################################################################################
@@ -282,7 +287,6 @@ function process(::Type{REDCapClarification}, json)
             :interviewerin => :TelephoneInterviewer,
             :prb_erreicht => :TelephoneReached,
             :is_telefonkontakt => :TelephoneNotes,
-            :is_kein_telefonkontakt => :TelephoneNoCallNotes,
             :prb_teilnahme => :Participation,
             :is_ausschluss => :Exclusion,
             :instanz_schliessen => :CloseInstanceDepression,
@@ -320,6 +324,12 @@ function process(::Type{REDCapClarification}, json)
                 :CloseInstanceDepression, :CloseInstanceMania,
                 :DIPSReached, :PsychiatricDisorder, :Episode
             ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
+            :is_kein_telefonkontakt___1 => ByRow(x -> x == 1 ? "Invalid inflection signal" : missing) => :TelephoneNoCallNotes1,
+            :is_kein_telefonkontakt___2 => ByRow(x -> x == 1 ? "Participant annoyed" : missing) => :TelephoneNoCallNotes2,
+            :is_kein_telefonkontakt___3 => ByRow(x -> x == 1 ? "Previously not reached" : missing) => :TelephoneNoCallNotes3,
+            :is_kein_telefonkontakt___4 => ByRow(x -> x == 1 ? "Recently clarified with negative result" : missing) => :TelephoneNoCallNotes4,
+            :is_kein_telefonkontakt___5 => ByRow(x -> x == 1 ? "Inflection signal missed" : missing) => :TelephoneNoCallNotes5,
+            :is_kein_telefonkontakt___6 => ByRow(x -> x == 1 ? "Staff shortage" : missing) => :TelephoneNoCallNotes6,
             [
                 [:dsm_diagnosecodierung_1_is, :dips_03a_is],
                 [:dsm_diagnosecodierung_2_is, :dips_03b_is],
@@ -350,6 +360,10 @@ function process(::Type{REDCapClarification}, json)
             renamecols = false
         )
         transform(
+            [
+            :TelephoneNoCallNotes1, :TelephoneNoCallNotes2, :TelephoneNoCallNotes3,
+            :TelephoneNoCallNotes4, :TelephoneNoCallNotes5, :TelephoneNoCallNotes6
+    ] => ByRow((x...) -> coalesce(x...)) => :TelephoneNoCallNotes,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:DY1, :DY2, :DY3, :DY4, :DY5] => ByRow((x...) -> any(x)) => :Dysthymia,
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
@@ -445,7 +459,7 @@ function download_and_process_redcap(T::Type{<:AbstractREDCapProject}, participa
     return process(T, download_redcap(T, participants))
 end
 
-function upload_redcap(project::Type{REDCapSignals}, signals)
+function upload_signal(project::Type{REDCapSignals}, signal::Signal{T}) where {T}
     function preprocess(value)
         x = string(value)
 
@@ -456,65 +470,68 @@ function upload_redcap(project::Type{REDCapSignals}, signals)
         return x
     end
 
-    # upload each signal
-    for signal in signals
-        signalname = camel2snakecase(typeof(signal))
-        variablenames = camel2snakecase.(first.(signal.data))
-        variablevalues = preprocess.(last.(signal.data))
-        parameters = [name => value for (name, value) in zip(variablenames, variablevalues)]
+    signalname = camel2snakecase(T)
+    variablenames = camel2snakecase.(first.(signal.data))
+    variablevalues = preprocess.(last.(signal.data))
+    parameters = [name => value for (name, value) in zip(variablenames, variablevalues)]
 
-        if signalname in ["inflection_depression", "inflection_mania"]
-            forms = [
-                "forms[1]" => "inflection_depression", "forms[2]" => "inflection_mania"]
-            instruments = ["inflection_depression", "inflection_mania"]
-        else
-            forms = ["forms[1]" => signalname]
-            instruments = [signalname]
-        end
+    if T in [InflectionDepression, InflectionMania]
+        forms = [
+            "forms[1]" => "inflection_depression", "forms[2]" => "inflection_mania"]
+        instruments = ["inflection_depression", "inflection_mania"]
+    else
+        forms = ["forms[1]" => signalname]
+        instruments = [signalname]
+    end
 
-        participant = signal.participant
+    id = signal.participant.id
 
-        # determine the last instance of the signal
-        # for the two inflection signals, the highest overall is taken
-        instance = @chain begin
-            redcap_api_request(
-                token(project),
-                [
-                    "records" => participant,
-                    "forms[0]" => "initial",
-                    forms...
-                ]
-            )
-            filter(x -> x["redcap_repeat_instrument"] in instruments, _)
-            getindex.("redcap_repeat_instance")
-            maximum(; init = 0)
-        end
-
-        logdate = Dates.format(now(tz"Europe/Berlin"), "yyyy-mm-dd HH:MM:SS")
-
-        # upload the signal
-        data = Dict(
-            "participant_id" => participant,
-            "redcap_repeat_instrument" => signalname,
-            "redcap_repeat_instance" => string(instance + 1),
-            parameters...,
-            signalname * "_log_date" => logdate,
-            signalname * "_complete" => "2"
-        )
-
-        response = redcap_api_request(
+    # determine the last instance of the signal
+    # for the two inflection signals, the highest overall is taken
+    instance = @chain begin
+        redcap_api_request(
             token(project),
             [
-                "overwriteBehavior" => "overwrite",
-                "data" => JSON.json([data]),
-                "returnContent" => "ids"
+                "records" => id,
+                "forms[0]" => "initial",
+                forms...
             ]
         )
+        filter(x -> x["redcap_repeat_instrument"] in instruments, _)
+        getindex.("redcap_repeat_instance")
+        maximum(; init = 0)
+    end
 
-        if only(response) == participant
-            @info "Uploaded $(snake2camelcase(signalname)) signal for participant $participant." data
-        else
-            @error "An error occured when trying to upload a signal for participant $participant." data response
-        end
+    logdate = Dates.format(now(tz"Europe/Berlin"), "yyyy-mm-dd HH:MM:SS")
+
+    # upload the signal
+    data = Dict(
+        "participant_id" => id,
+        "redcap_repeat_instrument" => signalname,
+        "redcap_repeat_instance" => string(instance + 1),
+        parameters...,
+        signalname * "_log_date" => logdate,
+        signalname * "_complete" => "2"
+    )
+
+    response = redcap_api_request(
+        token(project),
+        [
+            "overwriteBehavior" => "overwrite",
+            "data" => JSON.json([data]),
+            "returnContent" => "ids"
+        ]
+    )
+
+    if only(response) == id
+        @info "Uploaded $(snake2camelcase(signalname)) signal for participant $id." data
+    else
+        @error "An error occured when trying to upload a signal for participant $id." data response
+    end
+end
+
+function upload_redcap(project::Type{REDCapSignals}, signals)
+    for signal in signals
+        upload_signal(project, signal)
     end
 end

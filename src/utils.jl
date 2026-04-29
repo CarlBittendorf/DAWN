@@ -20,19 +20,6 @@ end
 
 format_fields(fields) = map(i -> "fields[$(i-1)]" => fields[i], eachindex(fields))
 
-function format_signal(x)
-    s = x.participant * " (" * x.study_center * ", " * x.group * "): " * string(typeof(x)) *
-        "\n"
-
-    for (variable, value) in x.data
-        ismissing(value) && continue
-
-        s *= variable * ": " * string(value) * "\n"
-    end
-
-    return s
-end
-
 function parse_value(T, x)
     if isnothing(x) || ismissing(x)
         return missing
