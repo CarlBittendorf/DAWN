@@ -36,6 +36,19 @@ function script()
     end
 
     @chain df_clarification begin
+        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
+        => ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
+        dropmissing(:SignalDate)
+
+        groupby(:Participant)
+        subset(:SignalDate => (x -> map(s -> any(abs.(Dates.value.(x .- s)) .== 1), x)))
+
+        select(:Participant, :Instance, :SignalDate, :TelephoneReached)
+
+        add_table!(tables, "Instances on consecutive days", _)
+    end
+
+    @chain df_clarification begin
         subset([:HAMD, :TelephoneReached]
         => ByRow((h, t) -> !ismissing(h) && (ismissing(t) || !t)))
 
@@ -88,12 +101,11 @@ function script()
     end
 
     @chain df_clarification begin
-        subset([:DepressiveEpisode, :ManicEpisode] => ByRow((x...) -> any(!ismissing, x)))
-        dropmissing([:HAMDDate, :YMRSDate])
-        transform([:HAMDDate, :YMRSDate] => ByRow((h, d) -> d - h) => :Difference)
-        subset(:Difference => ByRow(x -> x > Day(0)))
+        dropmissing([:TelephoneDate, :HAMDDate, :YMRSDate])
+        subset([:TelephoneDate, :HAMDDate, :YMRSDate] => ByRow((t, h, y) -> t != h || t != y))
+        sort(:TelephoneDate)
 
-        select(:Participant, :Instance, :HAMDDate, :YMRSDate, :Difference, :DIPSDate)
+        select(:Participant, :Instance, :TelephoneDate, :HAMDDate, :YMRSDate)
 
         add_table!(
             tables, "Contradictory information regarding the date of the telephone interview", _)
