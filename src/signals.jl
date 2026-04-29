@@ -2,7 +2,8 @@
 # 1. Interface Documentation
 # 2. Generic Definitions
 # 3. Concrete Implementations
-# 4. High-level Functions
+# 4. Helper Functions
+# 5. High-level Functions
 
 ####################################################################################################
 # INTERFACE DOCUMENTATION
@@ -556,13 +557,33 @@ function receiver(signal::Signal{SymptomRemission})
     city == "Dresden" && return EMAIL_DRESDEN_UKD
 end
 
-function format_signal(x::Signal{T}) where {T}
-    participant = x.participant
+####################################################################################################
+# HELPER FUNCTIONS
+####################################################################################################
 
-    s = participant.id * " (" * participant.study_center * ", " * participant.group *
-        "): " * string(T) * "\n"
+"""
+    format_signal(signal::Signal{T}) where {T}
 
-    for (variable, value) in x.data
+Convert a detected signal into a human‑readable string representation.
+
+The output string contains:
+- Participant identifier and metadata (study center, group)
+- The signal type
+- All non-missing variable/value pairs associated with the signal
+"""
+function format_signal(signal::Signal{T}) where {T}
+    # extract participant associated with the signal
+    participant = signal.participant
+
+    # header line with participant metadata and signal type
+    s = participant.id * " (" *
+        participant.study_center * ", " *
+        participant.group * "): " *
+        string(T) * "\n"
+
+    # append each non-missing data field of the signal
+    for (variable, value) in signal.data
+        # skip missing values to avoid clutter
         ismissing(value) && continue
 
         s *= variable * ": " * string(value) * "\n"
@@ -578,10 +599,16 @@ end
 """
     detect_signals(participants, df; signals = subtypes(AbstractSignal), cutoff = Date(now()) - Day(1))
 
-Detects all applicable signals for a set of participants at a given cutoff date.
+Detect all applicable signals for a set of participants up to a cutoff date.
 
-This function orchestrates signal detection by iterating over participants and signal types,
-applying each signal's `detect` method to the relevant subset of longitudinal data.
+Workflow:
+1. Filter the longitudinal dataset to records up to the cutoff date.
+2. For each participant:
+   - Extract participant-specific data.
+   - Apply each signal type's `detect` method.
+3. Collect and return all detected signals.
+
+Only non-`nothing` detection results are returned.
 """
 function detect_signals(
         participants::Vector{Participant},
@@ -589,16 +616,22 @@ function detect_signals(
         signals = subtypes(AbstractSignal),
         cutoff::Date = Date(now()) - Day(1)
 )
+    # restrict data to observations on or before the cutoff date
     df_data = subset(df, :Date => ByRow(x -> x <= cutoff))
 
+    # container for all detected signals
     results = Signal[]
 
+    # iterate over each participant
     for participant in participants
+        # extract longitudinal data for the current participant
         df_participant = subset(df_data, :Participant => ByRow(isequal(participant.id)))
 
+        # apply each signal detector to the participant's data
         for signal in signals
             result = detect(signal, participant, df_participant, cutoff)
 
+            # store detected signals (ignore non-detections)
             if !isnothing(result)
                 push!(results, result)
             end

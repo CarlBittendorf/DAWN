@@ -19,7 +19,7 @@ function script()
     # build participant records based on the study center and query data
     participants = prepare_participants(study_center, df)
 
-    # detect signals for participants, considering only data before the cutoff
+    # detect signals for participants, considering only data up to the cutoff date
     signals = detect_signals(participants, df; cutoff)
 
     # upload detected signals to REDCap
