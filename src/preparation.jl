@@ -177,6 +177,22 @@ function prepare_participants_dataset(study_center, df)
     end
 end
 
+function prepare_participants(study_center, df)
+    df_participants = prepare_participants_dataset(study_center, df)
+
+    return map(
+        row -> Participant(
+            row.Participant,
+            row.InteractionDesignerGroup,
+            row.City,
+            row.StudyCenter,
+            row.Subprojects,
+            row.Diagnoses
+        ),
+        eachrow(df_participants)
+    )
+end
+
 function prepare_participant_ids(study_centers = STUDY_CENTERS)
     @chain begin
         vcat((
