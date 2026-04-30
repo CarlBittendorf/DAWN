@@ -136,6 +136,7 @@ function script()
     participants = unique(df_participants.Participant)
 
     df_baseline = download_and_process_redcap(REDCapS02Baseline, participants)
+    df_followup = download_and_process_redcap(REDCapS02FollowUp, participants)
 
     df_clarification = @chain begin
         download_and_process_redcap(REDCapClarification, participants)
@@ -144,7 +145,7 @@ function script()
         dropmissing
     end
 
-    df_diagnoses = vcat(df_baseline, df_clarification)
+    df_diagnoses = vcat(df_baseline, df_followup, df_clarification)
 
     # update diagnoses database
     create_or_replace_diagnoses_database(db)

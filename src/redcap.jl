@@ -53,12 +53,14 @@ function process end
 
 struct REDCapSignals <: AbstractREDCapProject end
 struct REDCapS02Baseline <: AbstractREDCapProject end
+struct REDCapS02FollowUp <: AbstractREDCapProject end
 struct REDCapMovisensXS <: AbstractREDCapProject end
 struct REDCapSubprojects <: AbstractREDCapProject end
 struct REDCapClarification <: AbstractREDCapProject end
 
 token(::Type{REDCapSignals}) = REDCAP_API_TOKEN_1308
 token(::Type{REDCapS02Baseline}) = REDCAP_API_TOKEN_1362
+token(::Type{REDCapS02FollowUp}) = REDCAP_API_TOKEN_1566
 token(::Type{REDCapMovisensXS}) = REDCAP_API_TOKEN_1376
 token(::Type{REDCapSubprojects}) = REDCAP_API_TOKEN_1401
 token(::Type{REDCapClarification}) = REDCAP_API_TOKEN_1553
@@ -77,6 +79,23 @@ function fields(::Type{REDCapS02Baseline})
         "dips_03c",
         "dips_03d",
         "dips_03e"
+    ]
+end
+
+function fields(::Type{REDCapS02FollowUp})
+    [
+        "participant_id",
+        "date_t2",
+        "dsm_diagnosecodierung_1_t2",
+        "dsm_diagnosecodierung_2_t2",
+        "dsm_diagnosecodierung_3_t2",
+        "dsm_diagnosecodierung_4_t2",
+        "dsm_diagnosecodierung_5_t2",
+        "dips_03a_t2",
+        "dips_03b_t2",
+        "dips_03c_t2",
+        "dips_03d_t2",
+        "dips_03e_t2"
     ]
 end
 
@@ -191,6 +210,42 @@ function process(::Type{REDCapS02Baseline}, json)
                 [:dsm_diagnosecodierung_3, :dips_03c],
                 [:dsm_diagnosecodierung_4, :dips_03d],
                 [:dsm_diagnosecodierung_5, :dips_03e]
+            ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
+            renamecols = false
+        )
+        transform(
+            [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
+            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
+        )
+
+        select(:Participant, :DIPSDate, :DepressiveEpisode, :ManicEpisode)
+    end
+end
+
+function process(::Type{REDCapS02FollowUp}, json)
+    @chain json begin
+        DataFrame
+        rename(
+            :participant_id => :Participant,
+            :date_t2 => :DIPSDate
+        )
+
+        subset(:DIPSDate => ByRow(!isequal("")))
+        transform(
+            :DIPSDate => ByRow(x -> Date(x[1:10])),
+            [
+                [:dsm_diagnosecodierung_1_t2, :dips_03a_t2],
+                [:dsm_diagnosecodierung_2_t2, :dips_03b_t2],
+                [:dsm_diagnosecodierung_3_t2, :dips_03c_t2],
+                [:dsm_diagnosecodierung_4_t2, :dips_03d_t2],
+                [:dsm_diagnosecodierung_5_t2, :dips_03e_t2]
+            ] .=> ByRow(is_depressive_episode) .=> [:DE1, :DE2, :DE3, :DE4, :DE5],
+            [
+                [:dsm_diagnosecodierung_1_t2, :dips_03a_t2],
+                [:dsm_diagnosecodierung_2_t2, :dips_03b_t2],
+                [:dsm_diagnosecodierung_3_t2, :dips_03c_t2],
+                [:dsm_diagnosecodierung_4_t2, :dips_03d_t2],
+                [:dsm_diagnosecodierung_5_t2, :dips_03e_t2]
             ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
             renamecols = false
         )
