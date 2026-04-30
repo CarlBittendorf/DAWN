@@ -27,14 +27,55 @@ function script()
     end
 
     @chain df_clarification begin
+        leftjoin(df_center; on = :Participant)
+
+        dropmissing(:HAMDDate)
+        sort([:HAMDDate, :StudyCenter])
+        subset(
+            :HAMDDate => ByRow(x -> x >= floor(Date(now()) - Month(6), Month)),
+            :HAMDDate => ByRow(x -> x <= Date(now()) - Week(2))
+        )
+        transform(
+            :HAMDDate => ByRow(monthname) => :Month,
+            :TelephoneReached => ByRow(x -> ismissing(x) ? false : x);
+            renamecols = false
+        )
+
+        groupby([:StudyCenter, :Month])
+        combine(
+            nrow => :InflectionSignals,
+            :TelephoneReached => count => :Reached
+        )
+
+        groupby(:Month)
+        transform(
+            groupindices => :MonthIndex,
+            :StudyCenter => (x -> indexin(x, ["Marburg", "Münster", "Dresden (UKD)", "Dresden (FAL)"])) => :StudyCenterIndex
+        )
+
+        sort([:MonthIndex, :StudyCenterIndex])
+        select(Not(:MonthIndex, :StudyCenterIndex))
+
+        push!(
+            _,
+            ["Total", "", map(sum, eachcol(_)[3:end])...];
+            promote = true
+        )
+
+        transform([:InflectionSignals, :Reached] => ByRow((t, c) -> format_compliance(c / t)) => :Percentage)
+
+        add_table!(tables, "Phone Calls", _)
+    end
+
+    @chain df_clarification begin
         dropmissing(:HAMD)
 
         leftjoin(df_center; on = :Participant)
 
         groupby(:StudyCenter)
         combine(
-            nrow => :Total,
-            :HAMD => (x -> count(x .> 8)) => :Critical
+            nrow => :PhoneCalls,
+            :HAMD => (x -> count(x .> 8)) => :CriticalHAMD
         )
 
         push!(
@@ -43,7 +84,7 @@ function script()
             promote = true
         )
 
-        transform([:Total, :Critical] => ByRow((n, c) -> format_compliance(c / n)) => :Percentage)
+        transform([:PhoneCalls, :CriticalHAMD] => ByRow((n, c) -> format_compliance(c / n)) => :Percentage)
 
         add_table!(tables, "HAM-D", _)
     end
@@ -55,8 +96,8 @@ function script()
 
         groupby(:StudyCenter)
         combine(
-            nrow => :Total,
-            :YMRS => (x -> count(x .> 7)) => :Critical
+            nrow => :PhoneCalls,
+            :YMRS => (x -> count(x .> 7)) => :CriticalYMRS
         )
 
         push!(
@@ -65,7 +106,7 @@ function script()
             promote = true
         )
 
-        transform([:Total, :Critical] => ByRow((n, c) -> format_compliance(c / n)) => :Percentage)
+        transform([:PhoneCalls, :CriticalYMRS] => ByRow((n, c) -> format_compliance(c / n)) => :Percentage)
 
         add_table!(tables, "YMRS", _)
     end
@@ -79,8 +120,8 @@ function script()
         groupby(:StudyCenter)
         combine(
             nrow => :CriticalHAMD,
-            :DepressiveEpisode => (x -> count(!ismissing, x)) => :Completed,
-            [:HAMDDate, :DepressiveEpisode] => ((h, e) -> count((h .< Date(now()) - Week(4)) .& ismissing.(e))) => :NotCompleted,
+            :DepressiveEpisode => (x -> count(!ismissing, x)) => :Interviews,
+            [:HAMDDate, :DepressiveEpisode] => ((h, e) -> count((h .< Date(now()) - Week(4)) .& ismissing.(e))) => :NoInterviews,
             [:HAMDDate, :DepressiveEpisode] => ((h, e) -> count((h .>= Date(now()) - Week(4)) .& ismissing.(e))) => :Pending
         )
 
@@ -102,8 +143,8 @@ function script()
         groupby(:StudyCenter)
         combine(
             nrow => :CriticalYMRS,
-            :ManicEpisode => (x -> count(!ismissing, x)) => :Completed,
-            [:YMRSDate, :ManicEpisode] => ((y, e) -> count((y .< Date(now()) - Week(4)) .& ismissing.(e))) => :NotCompleted,
+            :ManicEpisode => (x -> count(!ismissing, x)) => :Interviews,
+            [:YMRSDate, :ManicEpisode] => ((y, e) -> count((y .< Date(now()) - Week(4)) .& ismissing.(e))) => :NoInterviews,
             [:YMRSDate, :ManicEpisode] => ((y, e) -> count((y .>= Date(now()) - Week(4)) .& ismissing.(e))) => :Pending
         )
 
@@ -125,8 +166,10 @@ function script()
         groupby(:StudyCenter)
         combine(
             nrow => :Interviews,
-            [:DepressiveEpisode, :Dysthymia, :ManicEpisode] .=> count,
-            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(de .& dy)) => :DoubleDepression;
+            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(de .& .!dy)) => :DepressiveEpisode,
+            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(.!de .& dy)) => :Dysthymia,
+            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(de .& dy)) => :DoubleDepression,
+            :ManicEpisode .=> count;
             renamecols = false
         )
 
@@ -148,8 +191,10 @@ function script()
         groupby(:StudyCenter)
         combine(
             nrow => :Interviews,
-            [:DepressiveEpisode, :Dysthymia, :ManicEpisode] .=> count,
-            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(de .& dy)) => :DoubleDepression;
+            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(de .& .!dy)) => :DepressiveEpisode,
+            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(.!de .& dy)) => :Dysthymia,
+            [:DepressiveEpisode, :Dysthymia] => ((de, dy) -> count(de .& dy)) => :DoubleDepression,
+            :ManicEpisode .=> count;
             renamecols = false
         )
 
