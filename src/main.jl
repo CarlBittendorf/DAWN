@@ -10,7 +10,7 @@ include("../secrets.jl")
 
 using Chain, DataFrames, MiniLoggers, DuckDB, PyCall, HTTP, JSON, CSV, XML, ZipFile,
       TimeZones, Hyperscript, AlgebraOfGraphics, CairoMakie
-using Statistics, Printf
+using Statistics, Printf, InteractiveUtils
 
 @pyinclude("src/email.py")
 
