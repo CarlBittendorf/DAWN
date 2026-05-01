@@ -223,6 +223,8 @@ function process(::Type{REDCapS02Baseline}, json)
 end
 
 function process(::Type{REDCapS02FollowUp}, json)
+    isempty(json) && return DataFrame()
+
     @chain json begin
         DataFrame
         rename(
