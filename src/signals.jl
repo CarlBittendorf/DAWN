@@ -416,7 +416,7 @@ function detect(
 
             if count(symptom_remission) == 1 &&
                last(symptom_remission) &&
-               last(df_remission.Date) == cutoff
+               last(df.Date) == cutoff
                 data = Pair{String, Any}["SymptomRemissionDate" => cutoff]
 
                 return Signal(SymptomRemission, participant, df, data)
