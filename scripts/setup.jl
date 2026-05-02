@@ -23,10 +23,7 @@ for sc in STUDY_CENTERS
             process_redcap_movisensxs
         end
     else
-        df_movisensxs = download_redcap_movisensxs(
-            REDCAP_API_TOKEN_1376,
-            unique(df.pseudonym)
-        )
+        df_movisensxs = download_and_process_redcap(REDCapMovisensXS, unique(df.pseudonym))
     end
 
     df_centers = @chain df_movisensxs begin
