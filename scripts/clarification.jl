@@ -218,7 +218,7 @@ function script()
 
     send_email(
         EMAIL_CREDENTIALS,
-        EMAIL_ERROR_RECEIVER,
+        EMAIL_CLARIFICATION,
         "CRC393 Clarification",
         html
     )
