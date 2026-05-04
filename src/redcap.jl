@@ -332,6 +332,7 @@ function process(::Type{REDCapClarification}, json)
         rename(
             :participant_id => :Participant,
             :redcap_repeat_instance => :Instance,
+            :is_typ => :InflectionSignalType,
             :inflection_depression_first_value => :InflectionDepressionFirstValue,
             :inflection_depression_second_value => :InflectionDepressionSecondValue,
             :inflection_depression_first_date => :InflectionDepressionFirstDate,
@@ -365,6 +366,11 @@ function process(::Type{REDCapClarification}, json)
         combine(All() .=> (x -> coalesce(x...)); renamecols = false)
 
         transform(
+            :InflectionSignalType => ByRow(
+                x -> isequal(x, "1") ? "InflectionDepression" :
+                     isequal(x, "2") ? "InflectionMania" :
+                     missing
+            ),
             [
                 :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
                 :InflectionManiaFirstDate, :InflectionManiaSecondDate,
@@ -436,7 +442,7 @@ function process(::Type{REDCapClarification}, json)
         )
 
         select(
-            :Participant, :Instance,
+            :Participant, :Instance, :InflectionSignalType,
             :InflectionDepressionFirstValue, :InflectionDepressionSecondValue,
             :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
             :InflectionManiaFirstValue, :InflectionManiaSecondValue,
