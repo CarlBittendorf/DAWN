@@ -381,12 +381,12 @@ function process(::Type{REDCapClarification}, json)
                 :CloseInstanceDepression, :CloseInstanceMania,
                 :DIPSReached, :PsychiatricDisorder, :Episode
             ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
-            :is_kein_telefonkontakt___1 => ByRow(x -> !ismissing(x) && x == 1 ? "Invalid inflection signal" : missing) => :TelephoneNoCallNotes1,
-            :is_kein_telefonkontakt___2 => ByRow(x -> !ismissing(x) && x == 1 ? "Participant annoyed" : missing) => :TelephoneNoCallNotes2,
-            :is_kein_telefonkontakt___3 => ByRow(x -> !ismissing(x) && x == 1 ? "Previously not reached" : missing) => :TelephoneNoCallNotes3,
-            :is_kein_telefonkontakt___4 => ByRow(x -> !ismissing(x) && x == 1 ? "Recently clarified with negative result" : missing) => :TelephoneNoCallNotes4,
-            :is_kein_telefonkontakt___5 => ByRow(x -> !ismissing(x) && x == 1 ? "Inflection signal missed" : missing) => :TelephoneNoCallNotes5,
-            :is_kein_telefonkontakt___6 => ByRow(x -> !ismissing(x) && x == 1 ? "Staff shortage" : missing) => :TelephoneNoCallNotes6,
+            :is_kein_telefonkontakt___1 => ByRow(x -> !ismissing(x) && x == "1" ? "Invalid inflection signal" : missing) => :TelephoneNoCallNotes1,
+            :is_kein_telefonkontakt___2 => ByRow(x -> !ismissing(x) && x == "1" ? "Participant annoyed" : missing) => :TelephoneNoCallNotes2,
+            :is_kein_telefonkontakt___3 => ByRow(x -> !ismissing(x) && x == "1" ? "Previously not reached" : missing) => :TelephoneNoCallNotes3,
+            :is_kein_telefonkontakt___4 => ByRow(x -> !ismissing(x) && x == "1" ? "Recently clarified with negative result" : missing) => :TelephoneNoCallNotes4,
+            :is_kein_telefonkontakt___5 => ByRow(x -> !ismissing(x) && x == "1" ? "Inflection signal missed" : missing) => :TelephoneNoCallNotes5,
+            :is_kein_telefonkontakt___6 => ByRow(x -> !ismissing(x) && x == "1" ? "Staff shortage" : missing) => :TelephoneNoCallNotes6,
             [
                 [:dsm_diagnosecodierung_1_is, :dips_03a_is],
                 [:dsm_diagnosecodierung_2_is, :dips_03b_is],
