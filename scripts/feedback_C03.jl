@@ -23,12 +23,12 @@ function script()
 
     if !isempty(participantuuids)
         # bearer token, which is valid for five minutes
-        token = download_interaction_designer_token(username, password, clientsecret)
+        bearer_token = download_interaction_designer_token(username, password, clientsecret)
 
         # intense sampling feedback
         df = @chain begin
             download_interaction_designer_variable_values(
-                token,
+                bearer_token,
                 studyuuid,
                 participantuuids,
                 VARIABLES_C03_INTERVENTION;
