@@ -561,8 +561,33 @@ end
 # HELPER FUNCTIONS
 ####################################################################################################
 
+# default: no validation
+signal_validation(::Signal) = nothing
+
+# special-case inflection signals
+function signal_validation(signal::Signal{<:Union{InflectionDepression, InflectionMania}})
+    length(signal.data) == 4 ? "valid" : "invalid"
+end
+
+function format_header(signal::Signal{T}) where {T}
+    # extract participant associated with the signal
+    participant = signal.participant
+
+    validation = signal_validation(signal)
+
+    suffix = isnothing(validation) ? "" : " (" * validation * ")"
+
+    # header line with participant metadata and signal type
+    return string(
+        participant.id, " (",
+        participant.study_center, ", ",
+        participant.group, "): ",
+        string(T), suffix, "\n"
+    )
+end
+
 """
-    format_signal(signal::Signal{T}) where {T}
+    format_signal(signal::Signal) -> String
 
 Convert a detected signal into a human‑readable string representation.
 
@@ -571,25 +596,20 @@ The output string contains:
 - The signal type
 - All non-missing variable/value pairs associated with the signal
 """
-function format_signal(signal::Signal{T}) where {T}
-    # extract participant associated with the signal
-    participant = signal.participant
+function format_signal(signal::Signal)
+    io = IOBuffer()
 
-    # header line with participant metadata and signal type
-    s = participant.id * " (" *
-        participant.study_center * ", " *
-        participant.group * "): " *
-        string(T) * "\n"
+    write(io, format_header(signal))
 
     # append each non-missing data field of the signal
     for (variable, value) in signal.data
         # skip missing values to avoid clutter
         ismissing(value) && continue
 
-        s *= variable * ": " * string(value) * "\n"
+        write(io, variable, ": ", string(value), "\n")
     end
 
-    return s
+    return String(take!(io))
 end
 
 ####################################################################################################
