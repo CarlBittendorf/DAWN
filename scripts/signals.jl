@@ -25,6 +25,12 @@ function script()
     # upload detected signals to REDCap
     upload_redcap(REDCapSignals, signals)
 
+    # add remission signals to database
+    update_database(DatabaseRemissions, db, signals)
+
+    # add additional metadata to inflection signals
+    signals = map(signal -> attach_metadata(signal, study_center), signals)
+
     # collect all unique signal receivers (can be strings or vectors)
     receivers = @chain signals begin
         @. receiver       # extract receiver(s) from each signal
