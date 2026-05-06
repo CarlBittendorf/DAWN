@@ -137,15 +137,26 @@ function prepare_participants_dataset(study_center, df)
         combine(:Diagnosis => (x -> [[x...]]) => :Diagnoses)
     end
 
-    df_remissions = @chain begin
-        # contains :Participant, :SymptomRemissionDate
-        read_database(DatabaseRemissions, db)
+    tables = @chain begin
+        DBInterface.execute(db, "SHOW TABLES")
+        DataFrame
+        getproperty(:name)
+    end
 
-        sort(:SymptomRemissionDate)
+    if "DatabaseRemissions" in tables
+        df_remissions = @chain begin
+            # contains :Participant, :SymptomRemissionDate
+            read_database(DatabaseRemissions, db)
 
-        # reduce to one row per participant
-        groupby(:Participant)
-        combine(:SymptomRemissionDate => (x -> [[x...]]) => :Remissions)
+            sort(:SymptomRemissionDate)
+
+            # reduce to one row per participant
+            groupby(:Participant)
+            combine(:SymptomRemissionDate => (x -> [[x...]]) => :Remissions)
+        end
+
+    else
+        df_remissions = DataFrame(:Participant => String[], :Remissions => Date[])
     end
 
     subprojects = ["A04", "A06", "B01", "B03", "B05", "B07", "C01", "C02", "C03", "C04"]
