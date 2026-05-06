@@ -142,6 +142,7 @@ function update_database(::Type{DatabaseDiagnoses}, db)
 
     df_baseline = download_and_process_redcap(REDCapS02Baseline, participants)
     df_followup = download_and_process_redcap(REDCapS02FollowUp, participants)
+    df_a04 = download_and_process_redcap(REDCapA04, participants)
 
     df_clarification = @chain begin
         download_and_process_redcap(REDCapClarification, participants)
@@ -152,7 +153,7 @@ function update_database(::Type{DatabaseDiagnoses}, db)
         dropmissing
     end
 
-    df_diagnoses = vcat(df_baseline, df_followup, df_clarification)
+    df_diagnoses = vcat(df_baseline, df_followup, df_a04, df_clarification)
 
     create_or_replace_database(DatabaseDiagnoses, db, df_diagnoses)
 end
@@ -183,5 +184,18 @@ function update_database(::Type{DatabaseSubprojects}, db)
 end
 
 function update_database(::Type{DatabaseRemissions}, db, signals)
+    df_remission = DataFrame(:Participant => String[], :SymptomRemissionDate => Date[])
 
+    for signal in signals
+        if signal isa Signal{SymptomRemission}
+            push!(df_remission, [signal.participant.id, last(only(signal.data))])
+        end
+    end
+
+    df_remission = @chain df_remission begin
+        vcat(read_dataframe(DatabaseRemissions, db), _)
+        unique
+    end
+
+    create_or_replace_database(DatabaseRemissions, db, df_remission)
 end
