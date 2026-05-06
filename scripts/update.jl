@@ -11,7 +11,8 @@ function script()
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    update_database(DatabaseParticipants, db, username, password, clientsecret, studyuuid)
+    update_database(
+        DatabaseParticipants, db, username, password, clientsecret, studyuuid, groups)
     update_database(DatabaseMovisensXS, db)
     update_database(DatabaseSensingRunning, db, movisensxs_id, movisensxs_key)
     update_database(DatabaseDiagnoses, db)

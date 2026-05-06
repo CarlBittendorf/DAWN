@@ -1,6 +1,6 @@
 
 function update_database(
-        ::Type{DatabaseParticipants}, db, username, password, clientsecret, studyuuid)
+        ::Type{DatabaseParticipants}, db, username, password, clientsecret, studyuuid, groups)
     bearer_token = download_interaction_designer_token(username, password, clientsecret)
 
     # all current participant uuids in the InteractionDesigner
