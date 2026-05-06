@@ -6,25 +6,13 @@ for sc in STUDY_CENTERS
 
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    create_or_replace_participants_database(db)
-    create_or_replace_queries_database(db)
-
-    # fill database
     df = download_interaction_designer_dataframe(
         username, password, clientsecret, studyuuid)
 
     names, uuids, types = [getproperty.(VARIABLES_DATABASE, x)
                            for x in [:name, :uuid, :type]]
 
-    if haskey(ENV, "USER") && ENV["USER"] == "carlbittendorf"
-        df_movisensxs = @chain "export/CRC393 movisensXS Assignments.json" begin
-            read(String)
-            JSON.parse
-            process_redcap_movisensxs
-        end
-    else
-        df_movisensxs = download_and_process_redcap(REDCapMovisensXS, unique(df.pseudonym))
-    end
+    df_movisensxs = download_and_process_redcap(REDCapMovisensXS, unique(df.pseudonym))
 
     df_centers = @chain df_movisensxs begin
         groupby(:Participant)
@@ -52,20 +40,19 @@ for sc in STUDY_CENTERS
             renamecols = false
         )
 
+        # clean participant ids
+        transform(:Participant => ByRow(lstrip); renamecols = false)
+
         # add :StudyCenter column
-        transform(
-            :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x));
-            renamecols = false
-        )
         leftjoin(df_centers; on = :Participant)
 
-        append_dataframe(db, _, "participants")
+        create_or_replace_database(DatabaseParticipants, db, _)
     end
 
     @chain df begin
         # some variable uuids changed since the first deployment, use the new uuids
         transform(
-            :pseudonym => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x)),
+            :pseudonym => ByRow(lstrip),
             :variableId => (x -> replace(
                 x,
                 "6aaf1f9f-d035-4cef-afdc-9fb97dca6670" => "68e88276-e419-49d5-b86f-d12210fec164",
@@ -112,6 +99,6 @@ for sc in STUDY_CENTERS
 
         select(:Participant, :DateTime, :Variable, :Value)
 
-        append_dataframe(db, _, "queries")
+        create_or_replace_database(DatabaseQueries, db, _)
     end
 end
