@@ -21,7 +21,7 @@ function script()
     # determine participant uuids that are in B01
     participantuuids = @chain begin
         # contains :Participant, :InteractionDesignerParticipantUUID, :InteractionDesignerGroup and :StudyCenter columns
-        read_dataframe(db, "participants")
+        read_database(DatabaseParticipants, db)
 
         # remove inactive uuids
         subset(:InteractionDesignerParticipantUUID => ByRow(x -> x in participantuuids))
@@ -77,7 +77,7 @@ function script()
                 # determine whether this is the first or second intense sampling phase
                 phase = @chain begin
                     # contains :Participant, :DateTime, :Variable and :Value columns
-                    read_dataframe(db, "queries")
+                    read_database(DatabaseQueries, db)
 
                     subset(
                         :Participant => ByRow(isequal(participant)),

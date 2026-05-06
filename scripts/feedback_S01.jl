@@ -12,7 +12,7 @@ function script()
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
     df = @chain begin
-        read_dataframe(db, "queries")
+        read_database(DatabaseQueries, db)
         subset(:Variable => ByRow(isequal("ChronoRecord")))
 
         # entries before 05:30 are considered to belong to the previous day

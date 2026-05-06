@@ -21,7 +21,7 @@ function script()
     # determine participant uuids that are in C01
     participantuuids = @chain begin
         # contains :Participant, :InteractionDesignerParticipantUUID, :InteractionDesignerGroup and :StudyCenter columns
-        read_dataframe(db, "participants")
+        read_database(DatabaseParticipants, db)
 
         # remove inactive uuids
         subset(:InteractionDesignerParticipantUUID => ByRow(x -> x in participantuuids))

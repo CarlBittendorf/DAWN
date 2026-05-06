@@ -12,7 +12,7 @@ function script()
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    df_participants = read_dataframe(db, "participants")
+    df_participants = read_database(DatabaseParticipants, db)
 
     # determine participant uuids that are in C03
     participantuuids = @chain df_participants begin
