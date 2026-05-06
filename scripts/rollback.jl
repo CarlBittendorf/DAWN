@@ -7,10 +7,11 @@ for sc in STUDY_CENTERS
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    df_participants = read_dataframe(db, "participants")
+    df_participants = read_database(DatabaseParticipants, db)
 
     df_data = @chain begin
-        read_dataframe(db, "queries")
+        read_database(DatabaseQueries, db)
+
         subset(:DateTime => ByRow(x -> x < floor(now(), Day) - Day(1) + Hour(5) + Minute(30)))
         sort([:Participant, :DateTime])
     end
@@ -22,10 +23,7 @@ for sc in STUDY_CENTERS
     # connection to database
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
-    create_or_replace_participants_database(db)
-    create_or_replace_queries_database(db)
-
     # fill database again
-    append_dataframe(db, df_participants, "participants")
-    append_dataframe(db, df_data, "queries")
+    create_or_replace_database(DatabaseParticipants, db, df_participants)
+    create_or_replace_database(DatabaseQueries, db, df_data)
 end
