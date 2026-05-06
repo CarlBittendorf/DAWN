@@ -102,7 +102,7 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
     attach_metadata(signal, metadata)
 end
 
-function attach_metadata(signal::Signal{InflectionDepression}, study_center::StudyCenter)
+function attach_metadata(signal::Signal{InflectionMania}, study_center::StudyCenter)
     participant = signal.participant
 
     metadata = Pair{String, Any}[]
@@ -135,7 +135,7 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
 
         if !ismissing(ymrs) && ymrs > 8 && (ismissing(dips) || !dips)
             push!(
-                data,
+                metadata,
                 "WaitingForDIPS" => true,
                 "TelephoneDate" => last(df.TelephoneDate),
                 "YMRSValue" => last(df.YMRS)
