@@ -31,20 +31,20 @@ struct Signal{T <: AbstractSignal}
 
     # signal-specific metadata
     data::Vector{Pair{String, Any}}
+end
 
-    function Signal(
-            T::Type{<:AbstractSignal},
-            participant::Participant,
-            df::DataFrame,
-            data::Vector{Pair{String, Any}}
+function Signal(
+        T::Type{<:AbstractSignal},
+        participant::Participant,
+        df::DataFrame,
+        data::Vector{Pair{String, Any}}
+)
+    return Signal{T}(
+        participant,
+        last(df.NegativeEventIntensityMoment) isa Vector ||
+        last(df.PercentSocialInteractions) isa Vector,
+        data
     )
-        return new{T}(
-            participant,
-            last(df.NegativeEventIntensityMoment) isa Vector ||
-            last(df.PercentSocialInteractions) isa Vector,
-            data
-        )
-    end
 end
 
 """
