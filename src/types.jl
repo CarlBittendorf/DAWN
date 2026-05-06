@@ -43,6 +43,9 @@ struct Diagnosis
     # date of the diagnostic interview
     date::Date
 
+    # where the diagnosis was made (e.g. S02Baseline, S02FollowUp)
+    origin::String
+
     # whether the participant was diagnosed with an acute depressive episode
     depressive_episode::Bool
 
@@ -68,4 +71,7 @@ struct Participant
 
     # diagnoses from clinical interviews
     diagnoses::Vector{Diagnosis}
+
+    # symptom remissions based on PHQ-9 scores
+    remissions::Vector{Date}
 end

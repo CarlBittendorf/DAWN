@@ -22,6 +22,7 @@ include("interaction_designer.jl")
 include("movisensxs.jl")
 include("redcap.jl")
 include("preparation.jl")
+include("update.jl")
 include("email.jl")
 include("logging.jl")
 

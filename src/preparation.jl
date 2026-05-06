@@ -6,7 +6,7 @@ function prepare_queries_dataset(study_center)
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
     # contains :Participant, :MovisensXSParticipantID, :Instance and :AssignmentDate columns
-    df_movisensxs = read_dataframe(db, "movisensxs")
+    df_movisensxs = read_database(DatabaseMovisensXS, db)
 
     df_sensing = DataFrame(
         :Participant => get_mobile_sensing_participants(df_movisensxs),
@@ -15,14 +15,14 @@ function prepare_queries_dataset(study_center)
 
     df_running = @chain begin
         # contains :Participant and :Date columns
-        read_dataframe(db, "running")
+        read_database(DatabaseSensingRunning, db)
 
         transform(All() => ByRow((x...) -> true) => :MobileSensingRunning)
     end
 
     @chain begin
         # contains :Participant, :DateTime, :Variable and :Value columns
-        read_dataframe(db, "queries")
+        read_database(DatabaseQueries, db)
 
         # remove test accounts
         subset(:Participant => ByRow(x -> !(x in TEST_ACCOUNTS)))
@@ -119,32 +119,44 @@ function prepare_participants_dataset(study_center, df)
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
     # contains :Participant, :InteractionDesignerParticipantUUID, :InteractionDesignerGroup and :StudyCenter columns
-    df_participants = read_dataframe(db, "participants")
+    df_participants = read_database(DatabaseParticipants, db)
 
-    # contains :Participant, :IsA06, :IsB01, :IsB03, :IsB05, :IsB07, :IsC01, :IsC02, :IsC03 and :IsC04 columns
-    df_subprojects = read_dataframe(db, "subprojects")
+    # contains :Participant, :A06, :B01, :B03, :B05, :B07, :C01, :C02, :C03 and :C04 columns
+    df_subprojects = read_database(DatabaseSubprojects, db)
 
     df_diagnoses = @chain begin
-        # contains :Participant, :DIPSDate, :DepressiveEpisode and :ManicEpisode columns
-        read_dataframe(db, "diagnoses")
+        # contains :Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode and :ManicEpisode columns
+        read_database(DatabaseDiagnoses, db)
 
         sort(:DIPSDate)
 
-        transform([:DIPSDate, :DepressiveEpisode, :ManicEpisode] => ByRow(Diagnosis) => :Diagnosis)
+        transform([:DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode] => ByRow(Diagnosis) => :Diagnosis)
 
         # reduce to one row per participant
         groupby(:Participant)
         combine(:Diagnosis => (x -> [[x...]]) => :Diagnoses)
     end
 
+    df_remissions = @chain begin
+        # contains :Participant, :SymptomRemissionDate
+        read_database(DatabaseRemissions, db)
+
+        sort(:SymptomRemissionDate)
+
+        # reduce to one row per participant
+        groupby(:Participant)
+        combine(:SymptomRemissionDate => (x -> [[x...]]) => :Remissions)
+    end
+
     subprojects = ["A04", "A06", "B01", "B03", "B05", "B07", "C01", "C02", "C03", "C04"]
 
     @chain df begin
         select(:Participant, :IsA04)
+        rename(:IsA04 => :A04)
 
         # reduce to one row per participant
         groupby(:Participant)
-        combine(:IsA04 => (x -> coalesce(reverse(x)...)); renamecols = false)
+        combine(:A04 => (x -> coalesce(reverse(x)...)); renamecols = false)
 
         leftjoin(df_participants; on = :Participant)
         dropmissing(:InteractionDesignerGroup)
@@ -160,18 +172,26 @@ function prepare_participants_dataset(study_center, df)
 
         # replace missings with false
         transform(
-            "Is" .* subprojects .=> ByRow(x -> isvalid(x) ? x : false);
+            subprojects .=> ByRow(x -> isvalid(x) ? x : false);
             renamecols = false
         )
 
         # collect subproject assignments into a vector
-        transform("Is" .* subprojects => ByRow((x...) -> subprojects[[x...]]) => :Subprojects)
+        transform(subprojects => ByRow((x...) -> subprojects[[x...]]) => :Subprojects)
 
         leftjoin(df_diagnoses; on = :Participant)
 
         # replace missings in :Diagnoses with an empty vector
         transform(
             :Diagnoses => ByRow(x -> ismissing(x) ? Diagnosis[] : x);
+            renamecols = false
+        )
+
+        leftjoin(df_remissions; on = :Participant)
+
+        # replace missings in :Remissions with an empty vector
+        transform(
+            :Remissions => ByRow(x -> ismissing(x) ? Date[] : x);
             renamecols = false
         )
     end
@@ -187,13 +207,14 @@ function prepare_participants(study_center, df)
             row.City,
             row.StudyCenter,
             row.Subprojects,
-            row.Diagnoses
+            row.Diagnoses,
+            row.Remissions
         ),
         eachrow(df_participants)
     )
 end
 
-function prepare_participant_ids(study_centers = STUDY_CENTERS)
+function prepare_participant_ids(study_centers::Vector{StudyCenter} = STUDY_CENTERS)
     @chain begin
         vcat((
             begin
@@ -202,8 +223,8 @@ function prepare_participant_ids(study_centers = STUDY_CENTERS)
                 # connection to database
                 db = DuckDB.DB(joinpath("data", city * ".db"))
 
-                @chain db begin
-                    read_dataframe("participants")
+                @chain begin
+                    read_database(DatabaseParticipants, db)
 
                     # remove test accounts
                     subset(:Participant => ByRow(x -> !(x in TEST_ACCOUNTS)))
@@ -212,8 +233,10 @@ function prepare_participant_ids(study_centers = STUDY_CENTERS)
         for study_center in study_centers
         )...)
 
-        transform(:Participant => ByRow(clean_participant_id); renamecols = false)
+        transform(:Participant => ByRow(lstrip); renamecols = false)
         getproperty(:Participant)
         unique
     end
 end
+
+prepare_participant_ids(study_center::StudyCenter) = prepare_participant_ids([study_center])

@@ -214,11 +214,12 @@ function process(::Type{REDCapS02Baseline}, json)
             renamecols = false
         )
         transform(
+            All() => ByRow((x...) -> "S02Baseline") => :DIPSOrigin,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
         )
 
-        select(:Participant, :DIPSDate, :DepressiveEpisode, :ManicEpisode)
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
     end
 end
 
@@ -252,11 +253,12 @@ function process(::Type{REDCapS02FollowUp}, json)
             renamecols = false
         )
         transform(
+            All() => ByRow((x...) -> "S02FollowUp") => :DIPSOrigin,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
         )
 
-        select(:Participant, :DIPSDate, :DepressiveEpisode, :ManicEpisode)
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
     end
 end
 

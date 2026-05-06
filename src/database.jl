@@ -1,94 +1,146 @@
 
-function create_or_replace_participants_database(db)
-    DBInterface.execute(
-        db,
-        """
-        CREATE OR REPLACE TABLE participants (
-            Participant STRING,
-            InteractionDesignerParticipantUUID STRING,
-            InteractionDesignerGroup STRING,
-            StudyCenter STRING
-        )
-        """
-    )
+# 1. Interface Documentation
+# 2. Generic Definitions
+# 3. Concrete Implementations
+# 4. High-level Functions
+
+####################################################################################################
+# INTERFACE DOCUMENTATION
+####################################################################################################
+
+# This code provides a typed interface to multiple local databases backed by DuckDB.
+
+# Each logical database is represented by a concrete Julia type that is a subtype of
+# `AbstractDatabase` and must implement the following function:
+
+# columns(::Type{<:AbstractDatabase})
+
+####################################################################################################
+# GENERIC DEFINITIONS
+####################################################################################################
+
+abstract type AbstractDatabase end
+
+"""
+    columns(::Type{<:AbstractDatabase}) -> Vector{String}
+
+
+Return the SQL column definitions for a database table.
+
+This function defines the schema associated with a concrete subtype of
+`AbstractDatabase`. Each element of the returned vector must be a valid SQL
+column definition of the form:
+
+    "ColumnName TYPE"
+
+
+For example:
+
+    [
+        "Participant STRING",
+        "Date DATE",
+        "Value FLOAT"
+    ]
+
+
+The order of columns determines the table layout in DuckDB and the order
+in which values are appended when inserting rows. Column names must match
+the column names of DataFrames used with `append_database`.
+"""
+function columns end
+
+####################################################################################################
+# CONCRETE IMPLEMENTATIONS
+####################################################################################################
+
+struct DatabaseParticipants <: AbstractDatabase end
+struct DatabaseQueries <: AbstractDatabase end
+struct DatabaseMovisensXS <: AbstractDatabase end
+struct DatabaseSensingRunning <: AbstractDatabase end
+struct DatabaseDiagnoses <: AbstractDatabase end
+struct DatabaseSubprojects <: AbstractDatabase end
+struct DatabaseRemissions <: AbstractDatabase end
+
+function columns(::Type{DatabaseParticipants})
+    [
+        "Participant STRING",
+        "InteractionDesignerParticipantUUID STRING",
+        "InteractionDesignerGroup STRING",
+        "StudyCenter STRING"
+    ]
 end
 
-function create_or_replace_queries_database(db)
-    DBInterface.execute(
-        db,
-        """
-        CREATE OR REPLACE TABLE queries (
-            Participant STRING,
-            DateTime DATETIME,
-            Variable STRING,
-            Value STRING
-        )
-        """
-    )
+function columns(::Type{DatabaseQueries})
+    [
+        "Participant STRING",
+        "DateTime DATETIME",
+        "Variable STRING",
+        "Value STRING"
+    ]
 end
 
-function create_or_replace_movisensxs_database(db)
-    DBInterface.execute(
-        db,
-        """
-        CREATE OR REPLACE TABLE movisensxs (
-            Participant STRING,
-            MovisensXSParticipantID STRING,
-            Instance INTEGER,
-            AssignmentDate DATE
-        )
-        """
-    )
+function columns(::Type{DatabaseMovisensXS})
+    [
+        "Participant STRING",
+        "MovisensXSParticipantID STRING",
+        "Instance INTEGER",
+        "AssignmentDate DATE"
+    ]
 end
 
-function create_or_replace_running_database(db)
-    DBInterface.execute(
-        db,
-        """
-        CREATE OR REPLACE TABLE running (
-            Participant STRING,
-            Date DATE
-        )
-        """
-    )
+function columns(::Type{DatabaseSensingRunning})
+    [
+        "Participant STRING",
+        "Date DATE"
+    ]
 end
 
-function create_or_replace_diagnoses_database(db)
-    DBInterface.execute(
-        db,
-        """
-        CREATE OR REPLACE TABLE diagnoses (
-            Participant STRING,
-            DIPSDate DATE,
-            DepressiveEpisode BOOLEAN,
-            ManicEpisode BOOLEAN
-        )
-        """
-    )
+function columns(::Type{DatabaseDiagnoses})
+    [
+        "Participant STRING",
+        "DIPSDate DATE",
+        "DIPSOrigin STRING",
+        "DepressiveEpisode BOOLEAN",
+        "ManicEpisode BOOLEAN"
+    ]
 end
 
-function create_or_replace_subprojects_database(db)
-    DBInterface.execute(
-        db,
-        """
-        CREATE OR REPLACE TABLE subprojects (
-            Participant STRING,
-            IsA06 BOOLEAN,
-            IsB01 BOOLEAN,
-            IsB03 BOOLEAN,
-            IsB05 BOOLEAN,
-            IsB07 BOOLEAN,
-            IsC01 BOOLEAN,
-            IsC02 BOOLEAN,
-            IsC03 BOOLEAN,
-            IsC04 BOOLEAN
-        )
-        """
-    )
+function columns(::Type{DatabaseSubprojects})
+    [
+        "Participant STRING",
+        "A06 BOOLEAN",
+        "B01 BOOLEAN",
+        "B03 BOOLEAN",
+        "B05 BOOLEAN",
+        "B07 BOOLEAN",
+        "C01 BOOLEAN",
+        "C02 BOOLEAN",
+        "C03 BOOLEAN",
+        "C04 BOOLEAN"
+    ]
 end
 
-function append_dataframe(db, df, table)
-    appender = DuckDB.Appender(db, table)
+function columns(::Type{DatabaseRemissions})
+    [
+        "Participant STRING",
+        "SymptomRemissionDate DATE"
+    ]
+end
+
+####################################################################################################
+# HIGH-LEVEL FUNCTIONS
+####################################################################################################
+
+"""
+    append_database(T::Type{<:AbstractDatabase}, db, df)
+
+Append the contents of a DataFrame to an existing database table.
+
+Rows from `df` are appended sequentially to the DuckDB table identified by `T`.
+The column order of `df` must exactly match the order returned by `columns(T)`.
+"""
+function append_database(T::Type{<:AbstractDatabase}, db, df)
+    appender = DuckDB.Appender(db, string(T))
 
     for row in eachrow(df)
         for value in row
@@ -101,10 +153,39 @@ function append_dataframe(db, df, table)
     DuckDB.close(appender)
 end
 
-function read_dataframe(db, table)
+"""
+    read_database(T::Type{<:AbstractDatabase}, db) -> DataFrame
+
+Read an entire database table into a Julia `DataFrame`.
+"""
+function read_database(T::Type{<:AbstractDatabase}, db)
     @chain begin
         DBInterface.connect(db)
-        DBInterface.execute("SELECT * FROM " * table)
+        DBInterface.execute("SELECT * FROM " * string(T))
         DataFrame
     end
+end
+
+"""
+    create_or_replace_database(T::Type{<:AbstractDatabase}, db)
+
+Create or replace a database table for the given database type.
+
+The table schema is derived from `columns(T)`. If a table with the same
+name already exists, it will be dropped and recreated.
+"""
+function create_or_replace_database(T::Type{<:AbstractDatabase}, db)
+    DBInterface.execute(
+        db,
+        """
+        CREATE OR REPLACE TABLE $(string(T)) (
+            $(join(columns(T), ",\n"))
+        )
+        """
+    )
+end
+
+function create_or_replace_database(T::Type{<:AbstractDatabase}, db, df)
+    create_or_replace_database(T, db)
+    append_database(T, db, df)
 end
