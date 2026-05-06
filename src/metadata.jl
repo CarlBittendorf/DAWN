@@ -1,7 +1,47 @@
 
-attach_metadata(signal::Signal{<:AbstractSignal}, _) = signal
+# 1. Interface Documentation
+# 2. Generic Definitions
+# 3. Concrete Implementations
 
-function attach_metadata(signal::Signal{InflectionDepression}, study_center)
+####################################################################################################
+# INTERFACE DOCUMENTATION
+####################################################################################################
+
+# This code provides a metadata-enrichment interface for `Signal`s.
+
+# Metadata is represented as a vector of `Pair{String, Any}` and appended to the signal's
+# existing `data` field. Concrete metadata rules depend on the type of signal and are implemented
+# via multiple dispatch. The core interface is:
+
+# attach_metadata(signal::Signal{<:AbstractSignal}, study_center::StudyCenter)
+
+####################################################################################################
+# GENERIC DEFINITIONS
+####################################################################################################
+
+"""
+    attach_metadata(signal::Signal{<:AbstractSignal}, study_center::StudyCenter) -> Signal
+
+Attach derived metadata to a signal.
+
+This function enriches a `Signal` with additional metadata derived from participant information
+and external study data (e.g. REDCap). The fallback implementation returns the input signal
+unchanged. Concrete signal types may override this behavior to inject signal-specific metadata.
+"""
+function attach_metadata end
+
+# fallback: no additional metadata
+attach_metadata(signal::Signal{<:AbstractSignal}, _::StudyCenter) = signal
+
+function attach_metadata(signal::Signal{T}, metadata::Vector{Pair{String, Any}}) where {T}
+    Signal{T}(signal.participant, signal.intense_sampling, vcat(signal.data, metadata))
+end
+
+####################################################################################################
+# CONCRETE IMPLEMENTATIONS
+####################################################################################################
+
+function attach_metadata(signal::Signal{InflectionDepression}, study_center::StudyCenter)
     participant = signal.participant
 
     metadata = Pair{String, Any}[]
@@ -59,14 +99,10 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center)
         end
     end
 
-    return Signal{InflectionDepression}(
-        signal.participant,
-        signal.intense_sampling,
-        vcat(signal.data, metadata)
-    )
+    attach_metadata(signal, metadata)
 end
 
-function attach_metadata(signal::Signal{InflectionDepression}, study_center)
+function attach_metadata(signal::Signal{InflectionDepression}, study_center::StudyCenter)
     participant = signal.participant
 
     metadata = Pair{String, Any}[]
@@ -107,9 +143,5 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center)
         end
     end
 
-    return Signal{InflectionMania}(
-        signal.participant,
-        signal.intense_sampling,
-        vcat(signal.data, metadata)
-    )
+    attach_metadata(signal, metadata)
 end
