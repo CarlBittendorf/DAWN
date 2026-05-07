@@ -193,7 +193,7 @@ function update_database(::Type{DatabaseRemissions}, db, signals)
     end
 
     df_remission = @chain df_remission begin
-        vcat(read_dataframe(DatabaseRemissions, db), _)
+        vcat(read_database(DatabaseRemissions, db), _)
         unique
     end
 
