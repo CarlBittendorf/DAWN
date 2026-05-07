@@ -91,7 +91,7 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
 
         if !ismissing(hamd) && hamd > 8 && (ismissing(dips) || !dips)
             push!(
-                data,
+                metadata,
                 "WaitingForDIPS" => true,
                 "TelephoneDate" => last(df.TelephoneDate),
                 "HAMDValue" => last(df.HAMD)
