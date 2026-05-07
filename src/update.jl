@@ -107,7 +107,7 @@ function update_database(
             hoursinpast = 24
         )
 
-        vcat(read_dataframe(DatabaseQueries, db), _)
+        vcat(read_database(DatabaseQueries, db), _)
         unique
     end
 

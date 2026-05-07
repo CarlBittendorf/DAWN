@@ -25,6 +25,9 @@ function script()
     # upload detected signals to REDCap
     upload_redcap(REDCapSignals, signals)
 
+    # connection to database
+    db = DuckDB.DB(joinpath("data", city * ".db"))
+
     # add remission signals to database
     update_database(DatabaseRemissions, db, signals)
 
