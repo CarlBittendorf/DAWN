@@ -27,9 +27,8 @@ abstract type AbstractDatabase end
 
 Return the SQL column definitions for a database table.
 
-This function defines the schema associated with a concrete subtype of
-`AbstractDatabase`. Each element of the returned vector must be a valid SQL
-column definition of the form:
+This function defines the schema associated with a concrete subtype of `AbstractDatabase`.
+Each element of the returned vector must be a valid SQL column definition of the form:
 
     "ColumnName TYPE"
 
@@ -43,9 +42,9 @@ For example:
     ]
 
 
-The order of columns determines the table layout in DuckDB and the order
-in which values are appended when inserting rows. Column names must match
-the column names of DataFrames used with `append_database`.
+The order of columns determines the table layout in DuckDB and the order in which values are
+appended when inserting rows. Column names must match the column names of DataFrames used with
+`append_database`.
 """
 function columns end
 
@@ -168,11 +167,12 @@ end
 
 """
     create_or_replace_database(T::Type{<:AbstractDatabase}, db)
+    create_or_replace_database(T::Type{<:AbstractDatabase}, db, df)
 
-Create or replace a database table for the given database type.
+Create or replace a database table associated with the database type `T`.
 
-The table schema is derived from `columns(T)`. If a table with the same
-name already exists, it will be dropped and recreated.
+The table schema is derived from `columns(T)`. If a table with the same name already exists,
+it will be dropped and recreated. If provided, appends the contents of the data frame `df`.
 """
 function create_or_replace_database(T::Type{<:AbstractDatabase}, db)
     DBInterface.execute(

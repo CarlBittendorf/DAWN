@@ -1,4 +1,46 @@
 
+# 1. Interface Documentation
+# 2. Generic Definitions
+# 3. Concrete Implementations
+
+####################################################################################################
+# INTERFACE DOCUMENTATION
+####################################################################################################
+
+# This code provides a unified, extensible interface for synchronizing external data sources with
+# local database tables.
+
+# Each concrete database table is represented by a subtype of `AbstractDatabase`. Updated data is
+# downloaded or computed, merged with existing database content if required and materialized as a
+# table using `create_or_replace_database`.
+
+# The core interface is:
+
+# update_database(::Type{<:AbstractDatabase}, db::DuckDB.DB, args...)
+
+####################################################################################################
+# GENERIC DEFINITIONS
+####################################################################################################
+
+"""
+    update_database(::Type{<:AbstractDatabase}, db::DuckDB.DB, args...)
+
+Update the table corresponding to the database type `T`.
+
+This is a generic interface function that synchronizes an external data source with a local table.
+The concrete behavior depends on the dispatched subtype of `AbstractDatabase`.
+
+Each implementation is responsible for:
+- Downloading or computing the required data
+- Performing any required deduplication or consistency checks
+- Recreating the target table using `create_or_replace_database`
+"""
+function update_database end
+
+####################################################################################################
+# CONCRETE IMPLEMENTATIONS
+####################################################################################################
+
 function update_database(
         ::Type{DatabaseParticipants}, db, username, password, clientsecret, studyuuid, groups)
     bearer_token = download_interaction_designer_token(username, password, clientsecret)
