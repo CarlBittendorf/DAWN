@@ -306,7 +306,8 @@ function process(::Type{REDCapMovisensXS}, json)
             :AssignmentDate => ByRow(x -> x == "" ? missing : Date(x));
             renamecols = false
         )
-        transform([:EntryCreatedDateTime, :AssignmentDate] => ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
+        transform([:EntryCreatedDateTime, :AssignmentDate]
+        => ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
 
         select(:Participant, :MovisensXSParticipantID,
             :Instance, :AssignmentDate, :StudyCenter)
@@ -348,6 +349,15 @@ function process(::Type{REDCapSubprojects}, json)
 end
 
 function process(::Type{REDCapClarification}, json)
+    notes = [
+        "InvalidSignal",
+        "ParticipantAnnoyed",
+        "PreviouslyNotReached",
+        "RecentlyClarified",
+        "SignalMissed",
+        "StaffShortage"
+    ]
+
     @chain json begin
         DataFrame
         rename(
@@ -408,12 +418,10 @@ function process(::Type{REDCapClarification}, json)
                 :CloseInstanceDepression, :CloseInstanceMania,
                 :DIPSReached, :PsychiatricDisorder, :Episode
             ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
-            :is_kein_telefonkontakt___1 => ByRow(x -> !ismissing(x) && x == "1" ? "Invalid inflection signal" : missing) => :TelephoneNoCallNotes1,
-            :is_kein_telefonkontakt___2 => ByRow(x -> !ismissing(x) && x == "1" ? "Participant annoyed" : missing) => :TelephoneNoCallNotes2,
-            :is_kein_telefonkontakt___3 => ByRow(x -> !ismissing(x) && x == "1" ? "Previously not reached" : missing) => :TelephoneNoCallNotes3,
-            :is_kein_telefonkontakt___4 => ByRow(x -> !ismissing(x) && x == "1" ? "Recently clarified with negative result" : missing) => :TelephoneNoCallNotes4,
-            :is_kein_telefonkontakt___5 => ByRow(x -> !ismissing(x) && x == "1" ? "Inflection signal missed" : missing) => :TelephoneNoCallNotes5,
-            :is_kein_telefonkontakt___6 => ByRow(x -> !ismissing(x) && x == "1" ? "Staff shortage" : missing) => :TelephoneNoCallNotes6,
+            [
+            :is_kein_telefonkontakt___1, :is_kein_telefonkontakt___2, :is_kein_telefonkontakt___3,
+            :is_kein_telefonkontakt___4, :is_kein_telefonkontakt___5, :is_kein_telefonkontakt___6
+    ] => ByRow((x...) -> notes[[isequal.(x, "1")...]]) => :TelephoneNoCallNotes,
             [
                 [:dsm_diagnosecodierung_1_is, :dips_03a_is],
                 [:dsm_diagnosecodierung_2_is, :dips_03b_is],
@@ -444,13 +452,11 @@ function process(::Type{REDCapClarification}, json)
             renamecols = false
         )
         transform(
-            [
-            :TelephoneNoCallNotes1, :TelephoneNoCallNotes2, :TelephoneNoCallNotes3,
-            :TelephoneNoCallNotes4, :TelephoneNoCallNotes5, :TelephoneNoCallNotes6
-    ] => ByRow((x...) -> coalesce(x...)) => :TelephoneNoCallNotes,
+            :TelephoneNoCallNotes => ByRow(x -> isempty(x) ? missing : first(x)),
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:DY1, :DY2, :DY3, :DY4, :DY5] => ByRow((x...) -> any(x)) => :Dysthymia,
-            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
+            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode;
+            renamecols = false
         )
         transform(
             [
@@ -530,16 +536,19 @@ Send a raw POST request to the REDCap API.
 Returns parsed JSON on success, or `nothing` if the request fails.
 """
 function redcap_api_request(token, parameters)
+    body = HTTP.URIs.escapeuri(Dict(
+        "token" => token,
+        "content" => "record",
+        "format" => "json",
+        "type" => "flat",
+        "returnFormat" => "json",
+        parameters...
+    ))
+
     response = HTTP.post(
-        "https://redcap.zih.tu-dresden.de/redcap/api/";
-        body = Dict(
-            "token" => token,
-            "content" => "record",
-            "format" => "json",
-            "type" => "flat",
-            "returnFormat" => "json",
-            parameters...
-        ),
+        "https://redcap.zih.tu-dresden.de/redcap/api/",
+        ["Content-Type" => "application/x-www-form-urlencoded"];
+        body,
         status_exception = false,
         logerrors = true,
         retries = 10
@@ -600,7 +609,9 @@ function upload_signal(project::Type{REDCapSignals}, signal::Signal{T}) where {T
 
     if T in [InflectionDepression, InflectionMania]
         forms = [
-            "forms[1]" => "inflection_depression", "forms[2]" => "inflection_mania"]
+            "forms[1]" => "inflection_depression",
+            "forms[2]" => "inflection_mania"
+        ]
         instruments = ["inflection_depression", "inflection_mania"]
     else
         forms = ["forms[1]" => signalname]
