@@ -41,8 +41,10 @@ function update_database end
 # CONCRETE IMPLEMENTATIONS
 ####################################################################################################
 
-function update_database(
-        ::Type{DatabaseParticipants}, db, username, password, clientsecret, studyuuid, groups)
+function update_database(::Type{DatabaseParticipants}, db, study_center)
+    username, password, clientsecret, studyuuid, groups = study_center.username,
+    study_center.password, study_center.clientsecret, study_center.studyuuid, groups
+
     bearer_token = download_interaction_designer_token(username, password, clientsecret)
 
     # all current participant uuids in the InteractionDesigner
@@ -132,8 +134,10 @@ function update_database(
     create_or_replace_database(DatabaseParticipants, db, df_participants)
 end
 
-function update_database(
-        ::Type{DatabaseQueries}, db, username, password, clientsecret, studyuuid)
+function update_database(::Type{DatabaseQueries}, db, study_center)
+    username, password, clientsecret, studyuuid, groups = study_center.username,
+    study_center.password, study_center.clientsecret, study_center.studyuuid, groups
+
     df_participants = read_database(DatabaseParticipants, db)
     participantuuids = unique(df_participants.InteractionDesignerParticipantUUID)
 
@@ -170,7 +174,9 @@ function update_database(::Type{DatabaseMovisensXS}, db)
     create_or_replace_database(DatabaseMovisensXS, db, df_movisensxs)
 end
 
-function update_database(::Type{DatabaseSensingRunning}, db, movisensxs_id, movisensxs_key)
+function update_database(::Type{DatabaseSensingRunning}, db, study_center)
+    movisensxs_id, movisensxs_key = study_center.movisensxs_id, study_center.movisensxs_key
+
     df_movisensxs = read_database(DatabaseMovisensXS, db)
 
     df_running = download_movisensxs_running(df_movisensxs, movisensxs_id, movisensxs_key)
