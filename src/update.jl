@@ -43,7 +43,8 @@ function update_database end
 
 function update_database(::Type{DatabaseParticipants}, db, study_center)
     username, password, clientsecret, studyuuid, groups = study_center.username,
-    study_center.password, study_center.clientsecret, study_center.studyuuid, groups
+    study_center.password, study_center.client_secret, study_center.studyuuid,
+    study_center.groups
 
     bearer_token = download_interaction_designer_token(username, password, clientsecret)
 
@@ -135,8 +136,8 @@ function update_database(::Type{DatabaseParticipants}, db, study_center)
 end
 
 function update_database(::Type{DatabaseQueries}, db, study_center)
-    username, password, clientsecret, studyuuid, groups = study_center.username,
-    study_center.password, study_center.clientsecret, study_center.studyuuid, groups
+    username, password, clientsecret, studyuuid = study_center.username,
+    study_center.password, study_center.client_secret, study_center.studyuuid
 
     df_participants = read_database(DatabaseParticipants, db)
     participantuuids = unique(df_participants.InteractionDesignerParticipantUUID)
