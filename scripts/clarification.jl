@@ -20,6 +20,8 @@ function script()
         select(:Participant, :StudyCenter)
     end
 
+    centers = ["Marburg", "Münster", "Dresden (UKD)", "Dresden (FAL)"]
+
     tables = Hyperscript.Node[]
 
     function add_table!(tables, paragraph, df)
@@ -29,14 +31,17 @@ function script()
     @chain df_clarification begin
         leftjoin(df_center; on = :Participant)
 
-        dropmissing(:HAMDDate)
-        sort([:HAMDDate, :StudyCenter])
+        dropmissing(:TelephoneDate)
+        sort([:TelephoneDate, :StudyCenter])
         subset(
-            :HAMDDate => ByRow(x -> x >= floor(Date(now()) - Month(6), Month)),
-            :HAMDDate => ByRow(x -> x <= Date(now()) - Week(2))
+            :TelephoneDate => ByRow(x -> x >= floor(Date(now()) - Month(6), Month)),
+            :TelephoneDate => ByRow(x -> x <= Date(now()) - Week(2)),
+            :TelephoneNoCallNotes => ByRow(
+                x -> ismissing(x) || x in ["SignalMissed", "StaffShortage"]
+            )
         )
         transform(
-            :HAMDDate => ByRow(monthname) => :Month,
+            :TelephoneDate => ByRow(monthname) => :Month,
             :TelephoneReached => ByRow(x -> ismissing(x) ? false : x);
             renamecols = false
         )
@@ -50,7 +55,7 @@ function script()
         groupby(:Month)
         transform(
             groupindices => :MonthIndex,
-            :StudyCenter => (x -> indexin(x, ["Marburg", "Münster", "Dresden (UKD)", "Dresden (FAL)"])) => :StudyCenterIndex
+            :StudyCenter => (x -> indexin(x, centers)) => :StudyCenterIndex
         )
 
         sort([:MonthIndex, :StudyCenterIndex])
