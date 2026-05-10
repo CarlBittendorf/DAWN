@@ -549,6 +549,7 @@ function redcap_api_request(token, parameters)
         "https://redcap.zih.tu-dresden.de/redcap/api/",
         ["Content-Type" => "application/x-www-form-urlencoded"];
         body,
+        pool = HTTP.Pool(1),
         status_exception = false,
         logerrors = true,
         retries = 10
