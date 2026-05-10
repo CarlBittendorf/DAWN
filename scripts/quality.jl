@@ -240,7 +240,7 @@ function script()
     @chain df_clarification begin
         subset(
             :InflectionSignalType => ByRow(isequal("InflectionDepression")),
-            :TelephoneReached => ByRow(x -> !ismissing(x) || x),
+            :TelephoneReached => ByRow(x -> !ismissing(x) && x),
             [:TelephoneDate, :HAMDDate] => ByRow(!isequal)
         )
 
@@ -257,7 +257,7 @@ function script()
     @chain df_clarification begin
         subset(
             :InflectionSignalType => ByRow(isequal("InflectionMania")),
-            :TelephoneReached => ByRow(x -> !ismissing(x) || x),
+            :TelephoneReached => ByRow(x -> !ismissing(x) && x),
             [:TelephoneDate, :YMRSDate] => ByRow(!isequal)
         )
 
