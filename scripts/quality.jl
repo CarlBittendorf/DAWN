@@ -12,8 +12,11 @@ function script()
     end
 
     @chain df_clarification begin
-        subset([:InflectionDepressionFirstValue, :InflectionManiaFirstValue]
-        => ByRow((d, m) -> ismissing(d) && ismissing(m)))
+        subset(
+            [:InflectionDepressionFirstValue, :InflectionManiaFirstValue]
+            => ByRow((d, m) -> ismissing(d) && ismissing(m)),
+            :TelephoneNoCallNotes => ByRow(!isequal("InvalidSignal"))
+        )
 
         select(:Participant, :Instance, :HAMD, :HAMDDate)
 
