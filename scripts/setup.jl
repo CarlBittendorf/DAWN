@@ -1,8 +1,9 @@
 include("../src/main.jl")
 
-for sc in STUDY_CENTERS
-    city, username, password, clientsecret, studyuuid = sc.name,
-    sc.username, sc.password, sc.client_secret, sc.studyuuid
+for study_center in STUDY_CENTERS
+    city, username, password, clientsecret, studyuuid = study_center.name,
+    study_center.username, study_center.password, study_center.client_secret,
+    study_center.studyuuid
 
     db = DuckDB.DB(joinpath("data", city * ".db"))
 
