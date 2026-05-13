@@ -47,16 +47,6 @@ end
 
 lastdays(df, x, cutoff) = subset(df, :Date => ByRow(d -> d > cutoff - Day(x)))
 
-function clean_participant_id(x)
-    value = tryparse(Int, x)
-
-    if isnothing(value)
-        return x
-    else
-        return lpad(string(value), 4, '0')
-    end
-end
-
 function clean_movisensxs_id(x)
     value = tryparse(Int, x)
 
