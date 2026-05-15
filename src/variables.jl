@@ -181,7 +181,8 @@ const VARIABLES_B05_INTENSE_SAMPLING = [
     Variable("AffectiveControl", "dd1eb159-df55-45aa-829c-401bc1f1897b", Int),
     Variable("CognitiveFlexibility", "93a96ad6-4f5a-4dcd-8cee-adf2e31d1e17", Int),
     Variable("SelfCompassion", "4ca4bbba-3880-4612-96b7-38d297adc425", Int),
-    Variable("LonelinessInverse", "1c996915-7597-484f-a703-cdc3d3d4edea", Int)
+    Variable("LonelinessInverse", "1c996915-7597-484f-a703-cdc3d3d4edea", Int),
+    Variable("B05DayCounter", "d89f6622-51a7-405b-86eb-1d473feccee9", Int)
 ]
 
 const VARIABLE_C01_INTENSE_SAMPLING = Variable(
