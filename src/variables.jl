@@ -5,61 +5,6 @@ struct Variable
     type::DataType
 end
 
-const VARIABLES_DATABASE = [
-    # S01
-    Variable("ChronoRecord", "f9415c23-ba74-460a-9548-61b52a3182c5", Int),
-    Variable("PHQ1", "4a8dfcf8-74da-470b-935b-4d956e53d1c6", Int),
-    Variable("PHQ2", "99ba96d0-af51-4a0d-aa8a-b731280c4567", Int),
-    Variable("PHQ3", "4cd93865-08a2-4508-af1f-f0b4486a2196", Int),
-    Variable("PHQ4", "1fe83b74-f70f-4181-9d46-aaeaf4cf6cdd", Int),
-    Variable("PHQ5", "91074a52-efa3-4856-8875-bc0889cd8c51", Int),
-    Variable("PHQ6", "2215da23-c219-4b09-b590-460e267c288c", Int),
-    Variable("PHQ7", "d4390a39-778d-446c-a9d3-11a1b9312ae4", Int),
-    Variable("PHQ8", "0f8cb0ab-63b0-4741-ba82-73c1f8c34333", Int),
-    Variable("PHQ9", "fbe0c9a9-9897-4393-b3a8-fc2c4bd69dd4", Int),
-    Variable("ASRM1", "f3832929-56f1-424a-8ffd-5935cacfe471", Int),
-    Variable("ASRM2", "9690f35c-6b80-4abf-b9c1-fa6cb75c45a8", Int),
-    Variable("ASRM3", "85aa78d5-e932-413b-a7f2-e8b5017be179", Int),
-    Variable("ASRM4", "38c80e9e-0c9d-47e6-9fdc-2fefcdb55615", Int),
-    Variable("ASRM5", "c24c098b-485d-469d-9f6f-7a590aced6c3", Int),
-    Variable("FallAsleep", "b093451b-2d2b-419b-8e82-2b82cc7d1670", String),
-    Variable("WakeUp", "059fc218-aa8e-4329-82ae-eb919c1e3070", String),
-    Variable("SleepQuality", "6ae09269-4c35-4e48-8951-dbd2f6518bab", Int),
-    Variable("SocialInteractionMore", "3403d1e6-2143-4e54-a774-484cbc8f28b9", Int),
-    Variable("MajorLifeEventInfluence", "593899e8-50c0-47d2-a68b-23fe4327b71c", Int),
-    Variable("Medication", "71c2dfb3-d05b-4c9e-a700-95f54ae393b8", String),
-    Variable("SubstanceMore", "d864251b-ab40-4785-b520-7e2bb5933d39", Int),
-    Variable(
-        "ExpectationMentalHealthProblems", "e4301b15-1f77-49c3-bdf3-eaa42cf20128", Int),
-    Variable("Inpatient", "1c3aaa4b-9f0b-43f6-a492-e6709b3a9b43", Int),
-    Variable("SickLeave", "71c7e3be-d217-47c3-b4ed-f445bdce128a", Int),
-    Variable("IsA04", "b6ef4e98-c75f-4a37-8aab-e32c6cb212fd", Bool),
-
-    # B01
-    Variable("NegativeEventIntensityMoment", "8ff830c0-39be-480f-8a2c-4da9c24b370d", Int),
-
-    # C01
-    Variable("TrainingSuccess", "8f71f2c4-611d-46f7-90b0-8c7954627eb0", Int),
-    Variable("TrainingProblems", "e5219fbb-5227-430d-81d7-23b4989e86b3", Int),
-    Variable("TrainingQuestions", "47a32b8e-41d4-4660-8b6a-1aac0ab17e2e", Int),
-    Variable("C01DayCounter", "a77152d5-2e72-4d00-8fcf-11bf1b3df54c", Int),
-
-    # B05/C03
-    Variable("SocialContact", "b6c34383-81df-4628-8890-058c5e934355", Int),
-    Variable("PercentSocialInteractions", "98a78237-4f14-4738-a0bf-25022c1ffa64", Int),
-    Variable("ExerciseSuccessful", "68e88276-e419-49d5-b86f-d12210fec164", Int),
-    Variable("ExerciseSuccessful", "b0791d6c-a53a-4432-8dda-3f257829b76e", Int),
-    Variable("ExerciseSuccessful", "64698771-ebf8-4685-9056-e620f7b22f38", Int),
-    Variable("ExerciseSuccessful", "aa028d22-45f5-4c3e-b57f-92c8a10485fe", Int),
-    Variable("B05DayCounter", "d89f6622-51a7-405b-86eb-1d473feccee9", Int)
-]
-
-const VARIABLE_GROUP = Variable(
-    "InteractionDesignerGroupIndex",
-    "f4efb3f1-508a-4be7-a021-3f5e5edd8fe1",
-    Int
-)
-
 const VARIABLES_B01_INTENSE_SAMPLING = [
     Variable("MDMQContentMoment", "7b2c3197-8090-48a9-bff1-b0d9301b5bc6", Int),
     Variable("MDMQAgitatedMoment", "9a515c37-79d7-408e-a168-eaec70fd0a6c", Int),
@@ -181,26 +126,60 @@ const VARIABLES_B05_INTENSE_SAMPLING = [
     Variable("AffectiveControl", "dd1eb159-df55-45aa-829c-401bc1f1897b", Int),
     Variable("CognitiveFlexibility", "93a96ad6-4f5a-4dcd-8cee-adf2e31d1e17", Int),
     Variable("SelfCompassion", "4ca4bbba-3880-4612-96b7-38d297adc425", Int),
-    Variable("LonelinessInverse", "1c996915-7597-484f-a703-cdc3d3d4edea", Int),
-    Variable("B05DayCounter", "d89f6622-51a7-405b-86eb-1d473feccee9", Int)
+    Variable("LonelinessInverse", "1c996915-7597-484f-a703-cdc3d3d4edea", Int)
 ]
 
-const VARIABLE_C01_INTENSE_SAMPLING = Variable(
-    "NegativeEventIntensityMoment",
-    "8ff830c0-39be-480f-8a2c-4da9c24b370d",
-    Int
-)
+const VARIABLES_DATABASE = [
+    # S01
+    Variable("ChronoRecord", "f9415c23-ba74-460a-9548-61b52a3182c5", Int),
+    Variable("PHQ1", "4a8dfcf8-74da-470b-935b-4d956e53d1c6", Int),
+    Variable("PHQ2", "99ba96d0-af51-4a0d-aa8a-b731280c4567", Int),
+    Variable("PHQ3", "4cd93865-08a2-4508-af1f-f0b4486a2196", Int),
+    Variable("PHQ4", "1fe83b74-f70f-4181-9d46-aaeaf4cf6cdd", Int),
+    Variable("PHQ5", "91074a52-efa3-4856-8875-bc0889cd8c51", Int),
+    Variable("PHQ6", "2215da23-c219-4b09-b590-460e267c288c", Int),
+    Variable("PHQ7", "d4390a39-778d-446c-a9d3-11a1b9312ae4", Int),
+    Variable("PHQ8", "0f8cb0ab-63b0-4741-ba82-73c1f8c34333", Int),
+    Variable("PHQ9", "fbe0c9a9-9897-4393-b3a8-fc2c4bd69dd4", Int),
+    Variable("ASRM1", "f3832929-56f1-424a-8ffd-5935cacfe471", Int),
+    Variable("ASRM2", "9690f35c-6b80-4abf-b9c1-fa6cb75c45a8", Int),
+    Variable("ASRM3", "85aa78d5-e932-413b-a7f2-e8b5017be179", Int),
+    Variable("ASRM4", "38c80e9e-0c9d-47e6-9fdc-2fefcdb55615", Int),
+    Variable("ASRM5", "c24c098b-485d-469d-9f6f-7a590aced6c3", Int),
+    Variable("FallAsleep", "b093451b-2d2b-419b-8e82-2b82cc7d1670", String),
+    Variable("WakeUp", "059fc218-aa8e-4329-82ae-eb919c1e3070", String),
+    Variable("SleepQuality", "6ae09269-4c35-4e48-8951-dbd2f6518bab", Int),
+    Variable("SocialInteractionMore", "3403d1e6-2143-4e54-a774-484cbc8f28b9", Int),
+    Variable("MajorLifeEventInfluence", "593899e8-50c0-47d2-a68b-23fe4327b71c", Int),
+    Variable("Medication", "71c2dfb3-d05b-4c9e-a700-95f54ae393b8", String),
+    Variable("SubstanceMore", "d864251b-ab40-4785-b520-7e2bb5933d39", Int),
+    Variable(
+        "ExpectationMentalHealthProblems", "e4301b15-1f77-49c3-bdf3-eaa42cf20128", Int),
+    Variable("Inpatient", "1c3aaa4b-9f0b-43f6-a492-e6709b3a9b43", Int),
+    Variable("SickLeave", "71c7e3be-d217-47c3-b4ed-f445bdce128a", Int),
+    Variable("IsA04", "b6ef4e98-c75f-4a37-8aab-e32c6cb212fd", Bool),
 
-const VARIABLES_C01_TRAINING = [
+    # B01
+    VARIABLES_B01_INTENSE_SAMPLING...,
+
+    # C01
+    Variable("C01DayCounter", "a77152d5-2e72-4d00-8fcf-11bf1b3df54c", Int),
     Variable("TrainingSuccess", "8f71f2c4-611d-46f7-90b0-8c7954627eb0", Int),
-    Variable("C01DayCounter", "a77152d5-2e72-4d00-8fcf-11bf1b3df54c", Int)
-]
+    Variable("TrainingProblems", "e5219fbb-5227-430d-81d7-23b4989e86b3", Int),
+    Variable("TrainingQuestions", "47a32b8e-41d4-4660-8b6a-1aac0ab17e2e", Int),
 
-const VARIABLES_C03_INTERVENTION = [
+    # B05/C03
+    Variable("B05DayCounter", "d89f6622-51a7-405b-86eb-1d473feccee9", Int),
+    Variable("SocialContact", "b6c34383-81df-4628-8890-058c5e934355", Int),
     Variable("ExerciseSuccessful", "68e88276-e419-49d5-b86f-d12210fec164", Int),
     Variable("ExerciseSuccessful", "b0791d6c-a53a-4432-8dda-3f257829b76e", Int),
     Variable("ExerciseSuccessful", "64698771-ebf8-4685-9056-e620f7b22f38", Int),
     Variable("ExerciseSuccessful", "aa028d22-45f5-4c3e-b57f-92c8a10485fe", Int),
-    Variable("MDMQContentMoment", "682d63c7-aeee-4085-9742-f2ed8ecdbd14", Int),
-    Variable("B05DayCounter", "d89f6622-51a7-405b-86eb-1d473feccee9", Int)
+    VARIABLES_B05_INTENSE_SAMPLING...
 ]
+
+const VARIABLE_GROUP = Variable(
+    "InteractionDesignerGroupIndex",
+    "f4efb3f1-508a-4be7-a021-3f5e5edd8fe1",
+    Int
+)
