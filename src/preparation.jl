@@ -20,10 +20,13 @@ function prepare_queries_dataset(study_center)
         transform(All() => ByRow((x...) -> true) => :MobileSensingRunning)
     end
 
-    variables_intense_sampling = vcat(
-        getproperty.(VARIABLES_B01_INTENSE_SAMPLING, :name),
-        getproperty.(VARIABLES_B05_INTENSE_SAMPLING, :name)
-    )
+    variables_intense_sampling = @chain begin
+        vcat(
+            getproperty.(VARIABLES_B01_INTENSE_SAMPLING, :name),
+            getproperty.(VARIABLES_B05_INTENSE_SAMPLING, :name)
+        )
+        unique
+    end
 
     @chain begin
         # contains :Participant, :DateTime, :Variable and :Value columns
@@ -71,9 +74,9 @@ function prepare_queries_dataset(study_center)
         # reduce to one row per participant per day
         groupby([:Participant, :Date])
         combine(
+            Not(variables_intense_sampling) .=> (x -> coalesce(x...)),
             variables_intense_sampling .=>
-                (x -> any(!ismissing, x) ? Ref(collect(skipmissing(x))) : missing),
-            Not(variables_intense_sampling) .=> (x -> coalesce(x...));
+                (x -> any(!ismissing, x) ? Ref(collect(skipmissing(x))) : missing);
             renamecols = false
         )
 
