@@ -149,7 +149,7 @@ function make_table(df)
                 tr(
                 [th(
                      scope = "col",
-                     style = "font-family: Roboto, sans-serif; font-size: 16px; font-weight: 300; line-height: 1.2; text-align: left; padding: 8px 24px 8px 8px; background-color: rgb(239, 239, 239);",
+                     style = "font-family: Roboto, sans-serif; font-size: 16px; font-weight: 300; line-height: 1.2; text-align: left; padding: 8px 16px 8px 8px; background-color: rgb(239, 239, 239);",
                      strong(name)
                  ) for name in names(df)]
             )
