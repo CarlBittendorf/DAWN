@@ -98,7 +98,7 @@ function detect(::Type{FeedbackB01}, participant::Participant, df::DataFrame, cu
                 :Compensation => cumsum => :CumulativeCompensation
             )
             transform([:Day, :CumulativeItems] => ByRow((d, x) -> round(100 * x / (73 * d); digits = 2)) => :CumulativeCompliance)
-            transform(:CumulativeCompliance => ByRow(x -> COMPENSATION_B01_BONUS[floor(Int, x)]) => :Bonus)
+            transform(:CumulativeCompliance => ByRow(x -> COMPENSATION_B01_BONUS[min(floor(Int, x), 100)]) => :Bonus)
         end
 
         if nrow(df_b01) >= 1
