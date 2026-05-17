@@ -2,7 +2,8 @@
 # 1. Interface Documentation
 # 2. Generic Definitions
 # 3. Concrete Implementations
-# 4. High-level Functions
+# 4. Helper Functions
+# 5. High-level Functions
 
 ####################################################################################################
 # INTERFACE DOCUMENTATION
@@ -58,6 +59,7 @@ struct REDCapMovisensXS <: AbstractREDCapProject end
 struct REDCapSubprojects <: AbstractREDCapProject end
 struct REDCapClarification <: AbstractREDCapProject end
 struct REDCapA04 <: AbstractREDCapProject end
+struct REDCapFeedback <: AbstractREDCapProject end
 
 token(::Type{REDCapSignals}) = REDCAP_API_TOKEN_1308
 token(::Type{REDCapS02Baseline}) = REDCAP_API_TOKEN_1362
@@ -66,6 +68,7 @@ token(::Type{REDCapMovisensXS}) = REDCAP_API_TOKEN_1376
 token(::Type{REDCapSubprojects}) = REDCAP_API_TOKEN_1401
 token(::Type{REDCapClarification}) = REDCAP_API_TOKEN_1553
 token(::Type{REDCapA04}) = REDCAP_API_TOKEN_1338
+token(::Type{REDCapFeedback}) = REDCAP_API_TOKEN_1626
 
 function fields(::Type{REDCapS02Baseline})
     [
@@ -97,7 +100,13 @@ function fields(::Type{REDCapS02FollowUp})
         "dips_03b_t2",
         "dips_03c_t2",
         "dips_03d_t2",
-        "dips_03e_t2"
+        "dips_03e_t2",
+        "klinischer_verlauf_36_t2",
+        "klinischer_verlauf_37_t2",
+        "klinischer_verlauf_39_t2",
+        "klinischer_verlauf_40_t2",
+        "klinischer_verlauf_41_t2",
+        "klinischer_verlauf_43_t2"
     ]
 end
 
@@ -525,6 +534,20 @@ function process(::Type{REDCapA04}, json)
 end
 
 ####################################################################################################
+# HELPER FUNCTIONS
+####################################################################################################
+
+function preprocess_redcap(value)
+    x = string(value)
+
+    x == "missing" && return ""
+    x == "true" && return "1"
+    x == "false" && return "0"
+
+    return x
+end
+
+####################################################################################################
 # HIGH-LEVEL FUNCTIONS
 ####################################################################################################
 
@@ -593,19 +616,9 @@ function download_and_process_redcap(T::Type{<:AbstractREDCapProject}, participa
 end
 
 function upload_signal(project::Type{REDCapSignals}, signal::Signal{T}) where {T}
-    function preprocess(value)
-        x = string(value)
-
-        x == "missing" && return ""
-        x == "true" && return "1"
-        x == "false" && return "0"
-
-        return x
-    end
-
     signalname = camel2snakecase(T)
     variablenames = camel2snakecase.(first.(signal.data))
-    variablevalues = preprocess.(last.(signal.data))
+    variablevalues = preprocess_redcap.(last.(signal.data))
     parameters = [name => value for (name, value) in zip(variablenames, variablevalues)]
 
     if T in [InflectionDepression, InflectionMania]
@@ -668,5 +681,43 @@ end
 function upload_redcap(project::Type{REDCapSignals}, signals)
     for signal in signals
         upload_signal(project, signal)
+    end
+end
+
+function upload_feedback(project::Type{REDCapFeedback}, feedback::Feedback{T}) where {T}
+    feedbackname = camel2snakecase(T)
+    variablenames = camel2snakecase.(first.(feedback.data))
+    variablevalues = preprocess_redcap.(last.(feedback.data))
+    parameters = [name => value for (name, value) in zip(variablenames, variablevalues)]
+
+    id = feedback.participant.id
+
+    # upload the feedback
+    data = Dict(
+        "participant_id" => id,
+        "redcap_repeat_instrument" => feedbackname,
+        parameters...,
+        feedbackname * "_complete" => "2"
+    )
+
+    response = redcap_api_request(
+        token(project),
+        [
+            "overwriteBehavior" => "overwrite",
+            "data" => JSON.json([data]),
+            "returnContent" => "ids"
+        ]
+    )
+
+    if only(response) == id
+        @info "Uploaded $(string(T)) for participant $id." data
+    else
+        @error "An error occured when trying to upload feedback for participant $id." data response
+    end
+end
+
+function upload_redcap(project::Type{REDCapFeedback}, feedback)
+    for x in feedback
+        upload_feedback(project, x)
     end
 end

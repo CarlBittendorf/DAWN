@@ -24,6 +24,7 @@ include("redcap.jl")
 include("preparation.jl")
 include("update.jl")
 include("metadata.jl")
+include("feedback.jl")
 include("email.jl")
 include("logging.jl")
 

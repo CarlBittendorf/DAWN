@@ -158,3 +158,21 @@ end
 camel2snakecase(x) = join(lowercase.(split(string(x), r"(?=[A-Z])")), "_")
 
 snake2camelcase(x) = join(uppercasefirst.(split(x, "_")))
+
+function enumerate_blocks(dates)
+    blocks = ones(Int, length(dates))
+    block = 1
+
+    for i in eachindex(dates)
+        i == 1 && continue
+
+        # if gap larger than 1 day -> new block
+        if dates[i] - dates[i - 1] != Day(1)
+            block += 1
+        end
+
+        blocks[i] = block
+    end
+
+    return blocks
+end
