@@ -404,7 +404,7 @@ function detect(::Type{FeedbackC03}, participant::Participant, df::DataFrame, cu
 end
 
 function detect(::Type{FeedbackS01}, participant::Participant, df::DataFrame, cutoff::Date)
-    if nrow(df) >= 1
+    if nrow(df) >= 1 && !contains(participant.group, "Partner")
         df_s01 = @chain df begin
             # determine if the participant just finished a multiple of 30 days
             # and has at least one entry within the last 30 days
