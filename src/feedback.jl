@@ -287,10 +287,10 @@ function detect(::Type{FeedbackC01}, participant::Participant, df::DataFrame, cu
                     "RedcapRepeatInstance" => last(df_c01.Week),
                     "FeedbackC01StartDate" => last(df_c01.Start),
                     "FeedbackC01EndDate" => last(df_c01.End),
-                    "FeedbackC01TrainingCompleted" => last(df_c01.Training),
+                    "FeedbackC01TrainingsCompleted" => last(df_c01.Training),
                     "FeedbackC01Compensation" => last(df_c01.Compensation),
-                    "FeedbackC03TotalTrainingCompleted" => last(df_c01.CumulativeTraining),
-                    "FeedbackC03TotalCompensation" => last(df_c01.CumulativeCompensation)
+                    "FeedbackC01TotalTrainingsCompleted" => last(df_c01.CumulativeTraining),
+                    "FeedbackC01TotalCompensation" => last(df_c01.CumulativeCompensation)
                 ]
 
                 return Feedback(FeedbackC01, participant, table, data)
