@@ -314,7 +314,7 @@ function script()
         subset(
             :HAMD => ByRow(x -> x > 8),
             [:DepressiveEpisode, :ManicEpisode] => ByRow((x...) -> all(ismissing, x)),
-            :HAMDDate => ByRow(x -> x < Date(now()) - Week(4)),
+            :HAMDDate => ByRow(x -> x < Date(now()) - Week(6)),
             :DIPSReached => ByRow(x -> ismissing(x) || x)
         )
         sort(:HAMDDate)
@@ -334,7 +334,7 @@ function script()
         subset(
             :YMRS => ByRow(x -> x > 7),
             [:DepressiveEpisode, :ManicEpisode] => ByRow((x...) -> all(ismissing, x)),
-            :YMRSDate => ByRow(x -> x < Date(now()) - Week(4)),
+            :YMRSDate => ByRow(x -> x < Date(now()) - Week(6)),
             :DIPSReached => ByRow(x -> ismissing(x) || x)
         )
         sort(:YMRSDate)
@@ -360,7 +360,7 @@ function script()
 
     send_email(
         EMAIL_CREDENTIALS,
-        EMAIL_ERROR_RECEIVER,
+        EMAIL_QUALITY,
         "CRC393 Data Quality",
         html
     )
