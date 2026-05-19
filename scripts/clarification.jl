@@ -126,7 +126,7 @@ function script()
         combine(
             nrow => :CriticalHAMD,
             :DepressiveEpisode => (x -> count(!ismissing, x)) => :Interviews,
-            [:HAMDDate, :DepressiveEpisode] => ((h, e) -> count((h .< Date(now()) - Week(4)) .& ismissing.(e))) => :NoInterviews,
+            [:HAMDDate, :DepressiveEpisode] => ((h, e) -> count((h .< Date(now()) - Week(4)) .& ismissing.(e))) => :Missed,
             [:HAMDDate, :DepressiveEpisode] => ((h, e) -> count((h .>= Date(now()) - Week(4)) .& ismissing.(e))) => :Pending
         )
 
@@ -149,7 +149,7 @@ function script()
         combine(
             nrow => :CriticalYMRS,
             :ManicEpisode => (x -> count(!ismissing, x)) => :Interviews,
-            [:YMRSDate, :ManicEpisode] => ((y, e) -> count((y .< Date(now()) - Week(4)) .& ismissing.(e))) => :NoInterviews,
+            [:YMRSDate, :ManicEpisode] => ((y, e) -> count((y .< Date(now()) - Week(4)) .& ismissing.(e))) => :Missed,
             [:YMRSDate, :ManicEpisode] => ((y, e) -> count((y .>= Date(now()) - Week(4)) .& ismissing.(e))) => :Pending
         )
 
