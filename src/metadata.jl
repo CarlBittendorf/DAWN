@@ -68,6 +68,7 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
         download_and_process_redcap(REDCapClarification, _)
 
         subset(:Participant => ByRow(isequal(participant.id)))
+        sort(:Instance)
     end
 
     if nrow(df) > 0
@@ -76,25 +77,30 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
         !ismissing(exclusion) && exclusion &&
             push!(metadata, "ExcludedByStudyStaff" => true)
 
-        open = !last(df.CloseInstanceDepression)
+        df_depression = subset(
+            df,
+            :InflectionSignalType => ByRow(isequal("InflectionDepression"))
+        )
+
+        open = !last(df_depression.CloseInstanceDepression)
 
         if ismissing(open) || open
             push!(
                 metadata,
                 "OpenInstance" => true,
-                "Instance" => last(df.Instance)
+                "Instance" => last(df_depression.Instance)
             )
         end
 
-        hamd = last(df.HAMD)
-        dips = last(df.DIPSReached)
+        hamd = last(df_depression.HAMD)
+        dips = last(df_depression.DIPSReached)
 
         if !ismissing(hamd) && hamd > 8 && (ismissing(dips) || !dips)
             push!(
                 metadata,
                 "WaitingForDIPS" => true,
-                "TelephoneDate" => last(df.TelephoneDate),
-                "HAMDValue" => last(df.HAMD)
+                "TelephoneDate" => last(df_depression.TelephoneDate),
+                "HAMDValue" => last(df_depression.HAMD)
             )
         end
     end
@@ -112,6 +118,7 @@ function attach_metadata(signal::Signal{InflectionMania}, study_center::StudyCen
         download_and_process_redcap(REDCapClarification, _)
 
         subset(:Participant => ByRow(isequal(participant.id)))
+        sort(:Instance)
     end
 
     if nrow(df) > 0
@@ -120,25 +127,27 @@ function attach_metadata(signal::Signal{InflectionMania}, study_center::StudyCen
         !ismissing(exclusion) && exclusion &&
             push!(metadata, "ExcludedByStudyStaff" => true)
 
-        open = !last(df.CloseInstanceMania)
+        df_mania = subset(df, :InflectionSignalType => ByRow(isequal("InflectionMania")))
+
+        open = !last(df_mania.CloseInstanceMania)
 
         if ismissing(open) || open
             push!(
                 metadata,
                 "OpenInstance" => true,
-                "Instance" => last(df.Instance)
+                "Instance" => last(df_mania.Instance)
             )
         end
 
-        ymrs = last(df.YMRS)
-        dips = last(df.DIPSReached)
+        ymrs = last(df_mania.YMRS)
+        dips = last(df_mania.DIPSReached)
 
         if !ismissing(ymrs) && ymrs > 8 && (ismissing(dips) || !dips)
             push!(
                 metadata,
                 "WaitingForDIPS" => true,
-                "TelephoneDate" => last(df.TelephoneDate),
-                "YMRSValue" => last(df.YMRS)
+                "TelephoneDate" => last(df_mania.TelephoneDate),
+                "YMRSValue" => last(df_mania.YMRS)
             )
         end
     end
