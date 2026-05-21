@@ -82,26 +82,28 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
             :InflectionSignalType => ByRow(isequal("InflectionDepression"))
         )
 
-        open = !last(df_depression.CloseInstanceDepression)
+        if nrow(df_depression) > 0
+            open = !last(df_depression.CloseInstanceDepression)
 
-        if ismissing(open) || open
-            push!(
-                metadata,
-                "OpenInstance" => true,
-                "Instance" => last(df_depression.Instance)
-            )
-        end
+            if ismissing(open) || open
+                push!(
+                    metadata,
+                    "OpenInstance" => true,
+                    "Instance" => last(df_depression.Instance)
+                )
+            end
 
-        hamd = last(df_depression.HAMD)
-        dips = last(df_depression.DIPSReached)
+            hamd = last(df_depression.HAMD)
+            dips = last(df_depression.DIPSReached)
 
-        if !ismissing(hamd) && hamd > 8 && (ismissing(dips) || !dips)
-            push!(
-                metadata,
-                "WaitingForDIPS" => true,
-                "TelephoneDate" => last(df_depression.TelephoneDate),
-                "HAMDValue" => last(df_depression.HAMD)
-            )
+            if !ismissing(hamd) && hamd > 8 && (ismissing(dips) || !dips)
+                push!(
+                    metadata,
+                    "WaitingForDIPS" => true,
+                    "TelephoneDate" => last(df_depression.TelephoneDate),
+                    "HAMDValue" => last(df_depression.HAMD)
+                )
+            end
         end
     end
 
@@ -129,26 +131,28 @@ function attach_metadata(signal::Signal{InflectionMania}, study_center::StudyCen
 
         df_mania = subset(df, :InflectionSignalType => ByRow(isequal("InflectionMania")))
 
-        open = !last(df_mania.CloseInstanceMania)
+        if nrow(df_mania) > 0
+            open = !last(df_mania.CloseInstanceMania)
 
-        if ismissing(open) || open
-            push!(
-                metadata,
-                "OpenInstance" => true,
-                "Instance" => last(df_mania.Instance)
-            )
-        end
+            if ismissing(open) || open
+                push!(
+                    metadata,
+                    "OpenInstance" => true,
+                    "Instance" => last(df_mania.Instance)
+                )
+            end
 
-        ymrs = last(df_mania.YMRS)
-        dips = last(df_mania.DIPSReached)
+            ymrs = last(df_mania.YMRS)
+            dips = last(df_mania.DIPSReached)
 
-        if !ismissing(ymrs) && ymrs > 8 && (ismissing(dips) || !dips)
-            push!(
-                metadata,
-                "WaitingForDIPS" => true,
-                "TelephoneDate" => last(df_mania.TelephoneDate),
-                "YMRSValue" => last(df_mania.YMRS)
-            )
+            if !ismissing(ymrs) && ymrs > 8 && (ismissing(dips) || !dips)
+                push!(
+                    metadata,
+                    "WaitingForDIPS" => true,
+                    "TelephoneDate" => last(df_mania.TelephoneDate),
+                    "YMRSValue" => last(df_mania.YMRS)
+                )
+            end
         end
     end
 
