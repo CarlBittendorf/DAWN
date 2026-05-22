@@ -229,3 +229,23 @@ function send_feedback_email(credentials, receivers, subproject, feedback)
 
     @info "Sent feedback email."
 end
+
+function send_compliance_email(credentials, receivers, city, df)
+    html = make_html(
+        "Compliance",
+        [
+            make_title("Compliance"),
+            make_paragraph(""),
+            make_table(df)
+        ]
+    )
+
+    send_email(
+        credentials,
+        receivers,
+        "CRC393 Compliance $city",
+        html
+    )
+
+    @info "Sent compliance email."
+end
