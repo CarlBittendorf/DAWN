@@ -75,3 +75,14 @@ struct Participant
     # symptom remissions based on PHQ-9 scores
     remissions::Vector{Date}
 end
+
+struct Variable
+    # name of the variable
+    name::String
+
+    # uuid of the variable in the InteractionDesigner
+    uuid::String
+
+    # data type of the variable
+    type::DataType
+end
