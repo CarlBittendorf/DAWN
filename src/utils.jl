@@ -159,6 +159,8 @@ camel2snakecase(x) = join(lowercase.(split(string(x), r"(?=[A-Z])")), "_")
 
 snake2camelcase(x) = join(uppercasefirst.(split(x, "_")))
 
+enumerate_days(x) = Dates.value.(Date.(x) .- Date(minimum(x))) .+ 1
+
 function enumerate_blocks(dates)
     blocks = ones(Int, length(dates))
     block = 1
