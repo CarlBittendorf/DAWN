@@ -1,9 +1,9 @@
 include("../src/main.jl")
 
 # determine the group uuids for each study center
-for sc in STUDY_CENTERS
-    city, username, password, clientsecret = sc.name, sc.username, sc.password,
-    sc.client_secret
+for study_center in STUDY_CENTERS
+    city, username, password, clientsecret = study_center.name,
+    study_center.username, study_center.password, study_center.client_secret
 
     token = download_interaction_designer_token(username, password, clientsecret)
     studyuuid = download_interaction_designer_studyuuid(token)
