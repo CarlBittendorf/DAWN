@@ -1,11 +1,12 @@
 include("../src/main.jl")
 
-sc = STUDY_CENTERS[1]
+study_center = STUDY_CENTERS[1]
 
-city = sc.name
+city = study_center.name
 
 # connection to database
 db = DuckDB.DB(joinpath("data", city * ".db"))
 
-df_participants = read_dataframe(db, "participants")
-df_data = read_dataframe(db, "queries")
+df_participants = read_database(DatabaseParticipants, db)
+df_data = read_database(DatabaseQueries, db)
+df_diagnoses = read_database(DatabaseDiagnoses, db)
