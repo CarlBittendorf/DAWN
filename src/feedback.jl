@@ -322,7 +322,7 @@ function detect(::Type{FeedbackC03}, participant::Participant, df::DataFrame, cu
                     sort(:B05DayCounter)
                     transform(:Prompts => cumsum => :CumulativePrompts)
                     transform([:Day, :CumulativePrompts] => ByRow((d, x) -> round(100 * x / (2 * d); digits = 2)) => :CumulativeCompliance)
-                    transform(:CumulativeCompliance => ByRow(x -> COMPENSATION_C03_PARTNER[floor(Int, x)]) => :Compensation)
+                    transform(:CumulativeCompliance => ByRow(x -> COMPENSATION_C03_PARTNER[min(floor(Int, x), 100)]) => :Compensation)
                 end
 
                 table = @chain df_c03 begin
