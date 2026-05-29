@@ -15,7 +15,7 @@ function script()
 
     update_database(DatabaseParticipants, db, study_center)
     update_database(DatabaseMovisensXS, db)
-    update_database(DatabaseSensingRunning, db, study_center)
+    #update_database(DatabaseSensingRunning, db, study_center)
     update_database(DatabaseDiagnoses, db)
     update_database(DatabaseSubprojects, db)
     update_database(DatabaseQueries, db, study_center)
