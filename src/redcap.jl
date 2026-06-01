@@ -175,9 +175,11 @@ function fields(::Type{REDCapClarification})
         "datum_instanz_schliessen_manie",
         "is_ausschluss",
         "date02",
+        "date02_interviewer",
         "hamd_sum17",
         "sighads_hamd_complete",
         "date03",
+        "date03_interviewer",
         "ymrs_sum",
         "ymrs_complete",
         "dips_erreicht_is",
@@ -393,8 +395,10 @@ function process(::Type{REDCapClarification}, json)
             :datum_instanz_schliessen_manie => :CloseInstanceManiaDate,
             :hamd_sum17 => :HAMD,
             :date02 => :HAMDDate,
+            :date02_interviewer => :HAMDDateInterviewer,
             :ymrs_sum => :YMRS,
             :date03 => :YMRSDate,
+            :date03_interviewer => :YMRSDateInterviewer,
             :dips_erreicht_is => :DIPSReached,
             :date_diagnosis_is => :DIPSDate,
             :dips_psychstoerung_is => :PsychiatricDisorder,
@@ -415,7 +419,8 @@ function process(::Type{REDCapClarification}, json)
                 :InflectionDepressionFirstDate, :InflectionDepressionSecondDate,
                 :InflectionManiaFirstDate, :InflectionManiaSecondDate,
                 :CloseInstanceDepressionDate, :CloseInstanceManiaDate,
-                :TelephoneDate, :HAMDDate, :YMRSDate, :DIPSDate
+                :TelephoneDate, :HAMDDate, :HAMDDateInterviewer,
+                :YMRSDate, :YMRSDateInterviewer, :DIPSDate
             ] .=> ByRow(x -> ismissing(x) ? x : Date(x[1:10])),
             [
                 :InflectionDepressionFirstValue, :InflectionDepressionSecondValue,
@@ -462,6 +467,8 @@ function process(::Type{REDCapClarification}, json)
         )
         transform(
             :TelephoneNoCallNotes => ByRow(x -> isempty(x) ? missing : first(x)),
+            [:HAMDDate, :HAMDDateInterviewer] => ByRow((x, y) -> coalesce(y, x)) => :HAMDDate,
+            [:YMRSDate, :YMRSDateInterviewer] => ByRow((x, y) -> coalesce(y, x)) => :YMRSDate,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:DY1, :DY2, :DY3, :DY4, :DY5] => ByRow((x...) -> any(x)) => :Dysthymia,
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode;
