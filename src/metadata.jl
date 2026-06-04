@@ -48,19 +48,20 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
 
     "A04" in participant.subprojects && push!(metadata, "ParticipatingInA04" => true)
 
-    # find the most recent diagnosis
-    _, index = findmax(x -> x.date, participant.diagnoses)
-    diagnosis = participant.diagnoses[index]
+    if !isempty(participant.diagnoses)
+        # find the most recent diagnosis
+        _, index = findmax(x -> x.date, participant.diagnoses)
+        diagnosis = participant.diagnoses[index]
 
-    if !isnothing(diagnosis) &&
-       diagnosis.depressive_episode &&
-       !any(x -> x >= diagnosis.date, participant.remissions)
-        push!(
-            metadata,
-            "DepressiveEpisode" => true,
-            "DIPSOrigin" => diagnosis.origin,
-            "DIPSDate" => diagnosis.date
-        )
+        if diagnosis.depressive_episode &&
+           !any(x -> x >= diagnosis.date, participant.remissions)
+            push!(
+                metadata,
+                "DepressiveEpisode" => true,
+                "DIPSOrigin" => diagnosis.origin,
+                "DIPSDate" => diagnosis.date
+            )
+        end
     end
 
     df = @chain begin
