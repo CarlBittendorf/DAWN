@@ -73,6 +73,11 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
     end
 
     if nrow(df) > 0
+        dropout = any(.!df.Participation)
+
+        !ismissing(dropout) && dropout &&
+            push!(metadata, "NotParticipating" => true)
+
         exclusion = any(df.Exclusion)
 
         !ismissing(exclusion) && exclusion &&
@@ -125,6 +130,11 @@ function attach_metadata(signal::Signal{InflectionMania}, study_center::StudyCen
     end
 
     if nrow(df) > 0
+        dropout = any(.!df.Participation)
+
+        !ismissing(dropout) && dropout &&
+            push!(metadata, "NotParticipating" => true)
+
         exclusion = any(df.Exclusion)
 
         !ismissing(exclusion) && exclusion &&
