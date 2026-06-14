@@ -3,7 +3,8 @@ include("../src/main.jl")
 function script()
     participants = prepare_participant_ids()
 
-    df_clarification = download_and_process_redcap(REDCapClarification, participants)
+    json_clarification = download_redcap(REDCapClarification, participants)
+    df_clarification = process(REDCapClarification, json_clarification)
 
     tables = Hyperscript.Node[]
 
@@ -349,6 +350,32 @@ function script()
         )
     end
 
+    @chain json_clarification begin
+        DataFrame
+
+        rename(
+            :participant_id => :Participant,
+            :redcap_repeat_instance => :Instance
+        )
+        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
+
+        groupby([:Participant, :Instance])
+        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+
+        transform([:dsm_diagnosecodierung_1_is, :dsm_diagnosecodierung_2_is, :dsm_diagnosecodierung_3_is, :dsm_diagnosecodierung_4_is, :dsm_diagnosecodierung_5_is] => ByRow((x...) -> [filter(!ismissing, x)...]) => :Codes)
+
+        subset(:Codes => ByRow(x -> any(s -> occursin(r"^(?!\d{2}\.\d{1,2}$).+", s), x)))
+
+        select(:Participant, :Instance, :Codes)
+
+        add_table!(
+            tables,
+            "Diagnostic codes do not match the ICD-10 scheme \
+            (please use ICD-10 codes)",
+            _
+        )
+    end
+
     html = make_html(
         "Data Quality",
         [
@@ -360,7 +387,7 @@ function script()
 
     send_email(
         EMAIL_CREDENTIALS,
-        EMAIL_QUALITY,
+        EMAIL_ERROR_RECEIVER, #EMAIL_QUALITY,
         "CRC393 Data Quality",
         html
     )
