@@ -472,7 +472,7 @@ function receiver(feedback::Feedback{FeedbackB05})
 end
 
 function receiver(feedback::Feedback{FeedbackC01})
-    if nrow(feedback.table) - 1 in [3, 5, 7, 9]
+    if nrow(feedback.table) - 1 in [2, 4, 6, 8]
         city = feedback.participant.city
 
         city == "Marburg" && return EMAIL_MARBURG_C01
