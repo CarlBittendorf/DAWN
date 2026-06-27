@@ -3,7 +3,22 @@ include("../src/main.jl")
 function script()
     participants = prepare_participant_ids()
 
+    json_baseline = download_redcap(REDCapS02Baseline, participants)
+    json_followup = download_redcap(REDCapS02FollowUp, participants)
     json_clarification = download_redcap(REDCapClarification, participants)
+    json_a04 = download_redcap(REDCapA04, participants)
+
+    df_baseline = @chain json_baseline begin
+        DataFrame
+
+        rename(
+            :participant_id => :Participant,
+            :dsm_diagnosecodierung_1 => :CodeS02Baseline
+        )
+
+        select(:Participant, :CodeS02Baseline)
+    end
+
     df_clarification = process(REDCapClarification, json_clarification)
 
     tables = Hyperscript.Node[]
@@ -15,7 +30,8 @@ function script()
     @chain df_clarification begin
         subset(
             [:InflectionDepressionFirstValue, :InflectionManiaFirstValue]
-            => ByRow((d, m) -> ismissing(d) && ismissing(m)),
+            =>
+                ByRow((d, m) -> ismissing(d) && ismissing(m)),
             :TelephoneNoCallNotes => ByRow(!isequal("InvalidSignal"))
         )
 
@@ -30,7 +46,8 @@ function script()
 
     @chain df_clarification begin
         transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
-        => ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
+        =>
+            ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
         dropmissing(:SignalDate)
 
         subset(
@@ -147,7 +164,8 @@ function script()
 
     @chain df_clarification begin
         transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
-        => ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
+        =>
+            ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
         dropmissing(:SignalDate)
 
         groupby(:Participant)
@@ -164,7 +182,8 @@ function script()
 
     @chain df_clarification begin
         transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
-        => ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
+        =>
+            ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
         dropmissing([:SignalDate, :TelephoneDate])
         transform([:SignalDate, :TelephoneDate] => ByRow((s, t) -> t - s) => :Difference)
         subset(:Difference => ByRow(x -> x < Day(0) || x > Week(2)))
@@ -181,7 +200,8 @@ function script()
 
     @chain df_clarification begin
         subset([:HAMD, :TelephoneReached]
-        => ByRow((h, t) -> !ismissing(h) && (ismissing(t) || !t)))
+        =>
+            ByRow((h, t) -> !ismissing(h) && (ismissing(t) || !t)))
 
         select(:Participant, :Instance, :TelephoneReached, :HAMD, :HAMDDate)
 
@@ -195,7 +215,8 @@ function script()
 
     @chain df_clarification begin
         subset([:YMRS, :TelephoneReached]
-        => ByRow((y, t) -> !ismissing(y) && (ismissing(t) || !t)))
+        =>
+            ByRow((y, t) -> !ismissing(y) && (ismissing(t) || !t)))
 
         select(:Participant, :Instance, :TelephoneReached, :YMRS, :YMRSDate)
 
@@ -225,7 +246,8 @@ function script()
 
     @chain df_clarification begin
         subset([:HAMD, :TelephoneInterviewer]
-        => ByRow((h, i) -> !ismissing(h) && (ismissing(i) || i == "-")))
+        =>
+            ByRow((h, i) -> !ismissing(h) && (ismissing(i) || i == "-")))
 
         select(:Participant, :Instance, :HAMD, :HAMDDate)
 
@@ -234,7 +256,8 @@ function script()
 
     @chain df_clarification begin
         subset([:YMRS, :TelephoneInterviewer]
-        => ByRow((y, i) -> !ismissing(y) && (ismissing(i) || i == "-")))
+        =>
+            ByRow((y, i) -> !ismissing(y) && (ismissing(i) || i == "-")))
 
         select(:Participant, :Instance, :YMRS, :YMRSDate)
 
@@ -362,8 +385,11 @@ function script()
         groupby([:Participant, :Instance])
         combine(All() .=> (x -> coalesce(x...)); renamecols = false)
 
-        transform([:dsm_diagnosecodierung_1_is, :dsm_diagnosecodierung_2_is, :dsm_diagnosecodierung_3_is, :dsm_diagnosecodierung_4_is, :dsm_diagnosecodierung_5_is]
-        => ByRow((x...) -> [filter(!ismissing, x)...]) => :Codes)
+        transform([:dsm_diagnosecodierung_1_is, :dsm_diagnosecodierung_2_is,
+            :dsm_diagnosecodierung_3_is, :dsm_diagnosecodierung_4_is,
+            :dsm_diagnosecodierung_5_is]
+        =>
+            ByRow((x...) -> [filter(!ismissing, x)...]) => :Codes)
 
         subset(:Codes => ByRow(x -> any(s -> occursin(r"^(?!\d{2}\.\d{1,2}$).+", s), x)))
 
@@ -373,6 +399,85 @@ function script()
             tables,
             "Diagnostic codes do not match the ICD-10 scheme \
             (please use ICD-10 codes)",
+            _
+        )
+    end
+
+    @chain json_clarification begin
+        DataFrame
+
+        rename(
+            :participant_id => :Participant,
+            :redcap_repeat_instance => :Instance,
+            :dsm_diagnosecodierung_1_is => :CodeClarification
+        )
+        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
+
+        groupby([:Participant, :Instance])
+        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+
+        dropmissing(:CodeClarification)
+
+        select(:Participant, :CodeClarification, :Instance)
+
+        leftjoin(df_baseline, _; on = :Participant)
+
+        dropmissing
+        subset([:CodeS02Baseline, :CodeClarification] => ByRow((b, c) -> b[1:2] != c[1:2]))
+
+        add_table!(
+            tables,
+            "Diagnostic codes at baseline and clarification do not match \
+            (please check if this is correct)",
+            _
+        )
+    end
+
+    @chain json_followup begin
+        DataFrame
+
+        rename(
+            :participant_id => :Participant,
+            :dsm_diagnosecodierung_1_t2 => :CodeS02FollowUp
+        )
+
+        select(:Participant, :CodeS02FollowUp)
+
+        leftjoin(df_baseline, _; on = :Participant)
+
+        dropmissing
+        subset(:CodeS02FollowUp => ByRow(!isequal("")))
+        subset([:CodeS02Baseline, :CodeS02FollowUp] => ByRow((b, c) -> b[1:2] != c[1:2]))
+
+        add_table!(
+            tables,
+            "Diagnostic codes at baseline and follow-up do not match \
+            (please check if this is correct)",
+            _
+        )
+    end
+
+    @chain json_a04 begin
+        DataFrame
+
+        rename(
+            :participant_id => :Participant,
+            :dsm_diagnosecodierung_1_a04 => :CodeA04
+        )
+        subset(:CodeA04 => ByRow(!isequal("")))
+
+        select(:Participant, :CodeA04)
+
+        leftjoin(df_baseline, _; on = :Participant)
+
+        dropmissing
+        subset(:CodeA04 => ByRow(!isequal("")))
+        subset([:CodeS02Baseline, :CodeA04] => ByRow((b, c) -> b[1:2] != c[1:2]))
+
+        add_table!(
+            tables,
+            "Diagnostic codes at baseline and A04 do not match \
+            (please check if this is correct)",
             _
         )
     end
