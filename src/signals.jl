@@ -162,7 +162,7 @@ function detect(::Type{Expectation}, participant::Participant, df::DataFrame, cu
 
     if nrow(df_expectation) == 2 &&
        last(df_expectation.Date) == cutoff &&
-       only(diff(df_expectation.ExpectationMentalHealthProblems)) >= 3
+       only(abs(diff(df_expectation.ExpectationMentalHealthProblems))) >= 3
         data = [
             "ExpectationFirstDate" => df_expectation.Date[1],
             "ExpectationSecondDate" => df_expectation.Date[2],
