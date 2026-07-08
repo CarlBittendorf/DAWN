@@ -102,7 +102,7 @@ function attach_metadata(signal::Signal{InflectionDepression}, study_center::Stu
             hamd = last(df_depression.HAMD)
             dips = last(df_depression.DIPSReached)
 
-            if !ismissing(hamd) && hamd > 8 && (ismissing(dips) || !dips)
+            if !ismissing(hamd) && hamd > 8 && ismissing(dips)
                 push!(
                     metadata,
                     "WaitingForDIPS" => true,
@@ -156,7 +156,7 @@ function attach_metadata(signal::Signal{InflectionMania}, study_center::StudyCen
             ymrs = last(df_mania.YMRS)
             dips = last(df_mania.DIPSReached)
 
-            if !ismissing(ymrs) && ymrs > 8 && (ismissing(dips) || !dips)
+            if !ismissing(ymrs) && ymrs > 8 && ismissing(dips)
                 push!(
                     metadata,
                     "WaitingForDIPS" => true,
