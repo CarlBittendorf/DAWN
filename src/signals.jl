@@ -552,7 +552,7 @@ end
 function receiver(signal::Signal{SymptomRemission})
     city = signal.participant.city
 
-    city == "Marburg" && return EMAIL_MARBURG_GENERAL
+    city == "Marburg" && return [EMAIL_MARBURG_GENERAL, EMAIL_MARBURG_A04]
     city == "Münster" && return EMAIL_MÜNSTER_A04
     city == "Dresden" && return EMAIL_DRESDEN_UKD
 end
