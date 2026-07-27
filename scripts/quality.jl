@@ -423,7 +423,9 @@ function script()
         leftjoin(df_baseline, _; on = :Participant)
 
         dropmissing
-        subset([:CodeS02Baseline, :CodeClarification] => ByRow((b, c) -> b[1:2] != c[1:2]))
+        subset(:CodeClarification => ByRow(!isequal("")))
+        subset([:CodeS02Baseline, :CodeClarification] =>
+            ByRow((b, c) -> length(b) < 2 || b[1:2] != c[1:2]))
 
         add_table!(
             tables,
@@ -447,7 +449,8 @@ function script()
 
         dropmissing
         subset(:CodeS02FollowUp => ByRow(!isequal("")))
-        subset([:CodeS02Baseline, :CodeS02FollowUp] => ByRow((b, c) -> b[1:2] != c[1:2]))
+        subset([:CodeS02Baseline, :CodeS02FollowUp] =>
+            ByRow((b, c) -> length(b) < 2 || b[1:2] != c[1:2]))
 
         add_table!(
             tables,
@@ -472,7 +475,8 @@ function script()
 
         dropmissing
         subset(:CodeA04 => ByRow(!isequal("")))
-        subset([:CodeS02Baseline, :CodeA04] => ByRow((b, c) -> b[1:2] != c[1:2]))
+        subset([:CodeS02Baseline, :CodeA04] =>
+            ByRow((b, c) -> length(b) < 2 || b[1:2] != c[1:2]))
 
         add_table!(
             tables,
