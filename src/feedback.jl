@@ -127,6 +127,7 @@ function detect(::Type{FeedbackB01}, participant::Participant, df::DataFrame, cu
             data = [
                 "RedcapRepeatInstance" => last(df_b01.Instance),
                 "FeedbackB01Date" => last(df_b01.Date),
+                "FeedbackB01Block" => last(df_b01.Block),
                 "FeedbackB01AcceptedPrompts" => last(df_b01.Prompts),
                 "FeedbackB01CompletedItems" => last(df_b01.Items),
                 "FeedbackB01DailyCompensation" => last(df_b01.Compensation),
