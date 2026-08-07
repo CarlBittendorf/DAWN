@@ -317,8 +317,8 @@ function process(::Type{REDCapMovisensXS}, json)
             :AssignmentDate => ByRow(x -> x == "" ? missing : Date(x));
             renamecols = false
         )
-        transform([:EntryCreatedDateTime, :AssignmentDate]
-        => ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
+        transform([:EntryCreatedDateTime, :AssignmentDate] =>
+            ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
 
         select(:Participant, :MovisensXSParticipantID,
             :Instance, :AssignmentDate, :StudyCenter)
@@ -433,9 +433,9 @@ function process(::Type{REDCapClarification}, json)
                 :DIPSReached, :PsychiatricDisorder, :Episode
             ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
             [
-            :is_kein_telefonkontakt___1, :is_kein_telefonkontakt___2, :is_kein_telefonkontakt___3,
-            :is_kein_telefonkontakt___4, :is_kein_telefonkontakt___5, :is_kein_telefonkontakt___6
-    ] => ByRow((x...) -> notes[[isequal.(x, "1")...]]) => :TelephoneNoCallNotes,
+                :is_kein_telefonkontakt___1, :is_kein_telefonkontakt___2, :is_kein_telefonkontakt___3,
+                :is_kein_telefonkontakt___4, :is_kein_telefonkontakt___5, :is_kein_telefonkontakt___6
+            ] => ByRow((x...) -> notes[[isequal.(x, "1")...]]) => :TelephoneNoCallNotes,
             [
                 [:dsm_diagnosecodierung_1_is, :dips_03a_is],
                 [:dsm_diagnosecodierung_2_is, :dips_03b_is],
@@ -467,8 +467,10 @@ function process(::Type{REDCapClarification}, json)
         )
         transform(
             :TelephoneNoCallNotes => ByRow(x -> isempty(x) ? missing : first(x)),
-            [:HAMDDate, :HAMDDateInterviewer] => ByRow((x, y) -> coalesce(y, x)) => :HAMDDate,
-            [:YMRSDate, :YMRSDateInterviewer] => ByRow((x, y) -> coalesce(y, x)) => :YMRSDate,
+            [:HAMDDate, :HAMDDateInterviewer] =>
+                ByRow((x, y) -> coalesce(y, x)) => :HAMDDate,
+            [:YMRSDate, :YMRSDateInterviewer] =>
+                ByRow((x, y) -> coalesce(y, x)) => :YMRSDate,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:DY1, :DY2, :DY3, :DY4, :DY5] => ByRow((x...) -> any(x)) => :Dysthymia,
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode;
@@ -699,11 +701,14 @@ function upload_feedback(project::Type{REDCapFeedback}, feedback::Feedback{T}) w
 
     id = feedback.participant.id
 
+    logdate = Dates.format(now(tz"Europe/Berlin"), "yyyy-mm-dd HH:MM:SS")
+
     # upload the feedback
     data = Dict(
         "participant_id" => id,
         "redcap_repeat_instrument" => feedbackname,
         parameters...,
+        feedbackname * "_log_date" => logdate,
         feedbackname * "_complete" => "2"
     )
 
