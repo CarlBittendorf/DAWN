@@ -77,6 +77,7 @@ struct StressfulLifeEvent <: AbstractSignal end
 struct MissingIntenseSampling <: AbstractSignal end
 struct MissingQuestionsProblems <: AbstractSignal end
 struct MissingExercise <: AbstractSignal end
+struct SamplingProblem <: AbstractSignal end
 struct SubstanceMore <: AbstractSignal end
 struct SocialInteractionMore <: AbstractSignal end
 struct Medication <: AbstractSignal end
@@ -198,8 +199,12 @@ function detect(
             )
         elseif contains(participant.group, "B05/C03")
             alarm = isalarm(
-                (x, y, i) -> x[i] isa Vector && length(x[i]) == 4 &&
-                                 all(isnothing, x[i]) && isnothing(y[i]),
+                (
+                    x,
+                    y,
+                    i
+                ) -> x[i] isa Vector && length(x[i]) == 4 &&
+                     all(isnothing, x[i]) && isnothing(y[i]),
                 df, [:PercentSocialInteractions, :SocialContact], cutoff, 2
             )
         else
@@ -248,6 +253,64 @@ function detect(
         data = Pair{String, Any}["MissingExerciseDate" => cutoff]
 
         return Signal(MissingExercise, participant, df, data)
+    end
+end
+
+function detect(
+        ::Type{SamplingProblem}, participant::Participant, df::DataFrame, cutoff::Date)
+    if nrow(df) >= 2
+        if participant.group == "B01"
+            df_instance = @chain df begin
+                dropmissing(:NegativeEventIntensityMoment)
+                transform(:Date => eachindex => :Instance)
+
+                select(:Date, :Instance)
+            end
+
+            df_sampling = @chain df begin
+                leftjoin(df_instance; on = :Date)
+                sort(:Date)
+
+                groupby(:Participant)
+                subset(
+                    :Date => (x -> isequal(x[end], cutoff)),
+                    :Instance => (x -> isvalid(x[end - 1]) && x[end - 1] % 14 != 0),
+                    :Instance => (x -> !isvalid(x[end]))
+                )
+            end
+
+            alarm = nrow(df_sampling) > 0
+        elseif contains(participant.group, "C01")
+            df_sampling = @chain df begin
+                groupby(:Participant)
+                subset(
+                    :Date => (x -> isequal(x[end], cutoff)),
+                    :C01DayCounter => (x -> isvalid(x[end - 1]) && x[end - 1] < 84),
+                    :C01DayCounter => (x -> !isvalid(x[end]))
+                )
+            end
+
+            alarm = nrow(df_sampling) > 0
+        elseif contains(participant.group, "B05/C03")
+            df_sampling = @chain df begin
+                groupby(:Participant)
+                subset(
+                    :Date => (x -> isequal(x[end], cutoff)),
+                    :B05DayCounter => (x -> isvalid(x[end - 1]) && x[end - 1] < 84),
+                    :B05DayCounter => (x -> !isvalid(x[end]))
+                )
+            end
+
+            alarm = nrow(df_sampling) > 0
+        else
+            return nothing
+        end
+
+        if alarm
+            data = Pair{String, Any}["SamplingProblemDate" => cutoff]
+
+            return Signal(SamplingProblem, participant, df, data)
+        end
     end
 end
 
@@ -315,10 +378,13 @@ end
 function detect(
         ::Type{SleepDuration}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects && isalarm(
-        (x, i) -> isvalid(x[i]) &&
-                      count(isvalid, x[1:i]) >= 5 &&
-                      (x[i] < 5 || x[i] > 10) &&
-                      count(e -> (e < 5 || e > 10), last(filter(isvalid, x), 5)) >= 3,
+        (
+            x,
+            i
+        ) -> isvalid(x[i]) &&
+             count(isvalid, x[1:i]) >= 5 &&
+             (x[i] < 5 || x[i] > 10) &&
+             count(e -> (e < 5 || e > 10), last(filter(isvalid, x), 5)) >= 3,
         df, :SleepDuration, cutoff, 4
     )
         data = Pair{String, Any}["SleepDurationDate" => cutoff]
@@ -329,10 +395,13 @@ end
 
 function detect(::Type{SleepQuality}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects && isalarm(
-        (x, i) -> isvalid(x[i]) &&
-                      count(isvalid, x[1:i]) >= 5 &&
-                      x[i] <= 30 &&
-                      count(e -> e <= 30, last(filter(isvalid, x), 5)) >= 3,
+        (
+            x,
+            i
+        ) -> isvalid(x[i]) &&
+             count(isvalid, x[1:i]) >= 5 &&
+             x[i] <= 30 &&
+             count(e -> e <= 30, last(filter(isvalid, x), 5)) >= 3,
         df, :SleepQuality, cutoff, 4
     )
         data = Pair{String, Any}["SleepQualityDate" => cutoff]
@@ -344,10 +413,13 @@ end
 function detect(
         ::Type{EarlyAwakening}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects && isalarm(
-        (x, i) -> isvalid(x[i]) &&
-                      count(isvalid, x[1:i]) >= 5 &&
-                      x[i] <= Time("05:00") &&
-                      count(e -> e <= Time("05:00"), last(filter(isvalid, x), 3)) >= 3,
+        (
+            x,
+            i
+        ) -> isvalid(x[i]) &&
+             count(isvalid, x[1:i]) >= 5 &&
+             x[i] <= Time("05:00") &&
+             count(e -> e <= Time("05:00"), last(filter(isvalid, x), 3)) >= 3,
         df, :WakeUp, cutoff, 4
     )
         data = Pair{String, Any}["EarlyAwakeningDate" => cutoff]
@@ -409,7 +481,9 @@ function detect(
                 transform(:PHQ9SumScore => is_symptom_free => :SymptomFree)
 
                 # check if the criteria for symptom remission are met
-                transform(:SymptomFree => (x -> map(i -> count(x[max(1, i - 52):i]) == 53, eachindex(x))) => :SymptomRemission)
+                transform(:SymptomFree =>
+                    (x -> map(i -> count(x[max(1, i - 52):i]) == 53, eachindex(x))) =>
+                        :SymptomRemission)
 
                 getproperty(:SymptomRemission)
             end
@@ -500,7 +574,7 @@ function receiver(::Signal{MissingExercise})
     return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
 end
 
-function receiver(signal::Signal{MissingIntenseSampling})
+function receiver(signal::Signal{<:Union{MissingIntenseSampling, SamplingProblem}})
     group = signal.participant.group
     city = signal.participant.city
     study_center = signal.participant.study_center
