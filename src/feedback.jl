@@ -328,7 +328,7 @@ function detect(::Type{FeedbackC03}, participant::Participant, df::DataFrame, cu
 
             transform(
                 :B05DayCounter => ByRow(x -> x - 14) => :Day,
-                :B05DayCounter => ByRow(x -> floor(Int, (x - 7) / 7)) => :Week,
+                :B05DayCounter => ByRow(x -> floor(Int, (x - 8) / 7)) => :Week,
                 :MDMQContentMoment =>
                     ByRow(x -> x isa Vector ? count(!isnothing, x) : 0) => :Prompts
             )
