@@ -451,7 +451,7 @@ function detect(::Type{FeedbackS01}, participant::Participant, df::DataFrame, cu
                 groupby(:Block)
                 combine(
                     :Date => (x -> minimum(x; init = cutoff)) => :Start,
-                    :Date => (x -> maximum(x; init = cutoff - Day(180))) => :End,
+                    :Date => (x -> maximum(x; init = cutoff - Day(1000))) => :End,
                     :ChronoRecord =>
                         (x -> round(100 * count(isvalid, x) / 30; digits = 2)) =>
                             :Compliance;
