@@ -260,7 +260,13 @@ function process(::Type{REDCapS02FollowUp}, json)
         DataFrame
         rename(
             :participant_id => :Participant,
-            :date_t2 => :DIPSDate
+            :date_t2 => :DIPSDate,
+            :klinischer_verlauf_36_t2 => :NumberDepressiveEpisodes,
+            :klinischer_verlauf_37_t2 => :MonthsDepressiveState,
+            :klinischer_verlauf_39_t2 => :MonthsSubclinicalDepressiveSymptoms,
+            :klinischer_verlauf_40_t2 => :NumberManicEpisodes,
+            :klinischer_verlauf_41_t2 => :MonthsManicState,
+            :klinischer_verlauf_43_t2 => :MonthsSubclinicalManicSymptoms
         )
 
         subset(:DIPSDate => ByRow(!isequal("")))
@@ -288,7 +294,9 @@ function process(::Type{REDCapS02FollowUp}, json)
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
         )
 
-        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode,
+            :NumberDepressiveEpisodes, :MonthsDepressiveState, :MonthsSubclinicalDepressiveSymptoms,
+            :NumberManicEpisodes, :MonthsManicState, :MonthsSubclinicalManicSymptoms)
     end
 end
 

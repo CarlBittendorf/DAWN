@@ -42,7 +42,10 @@ function update_database end
 ####################################################################################################
 
 function update_database(::Type{DatabaseParticipants}, db, study_center)
-    username, password, clientsecret, studyuuid, groups = study_center.username,
+    username, password,
+    clientsecret,
+    studyuuid,
+    groups = study_center.username,
     study_center.password, study_center.client_secret, study_center.studyuuid,
     study_center.groups
 
@@ -136,7 +139,9 @@ function update_database(::Type{DatabaseParticipants}, db, study_center)
 end
 
 function update_database(::Type{DatabaseQueries}, db, study_center)
-    username, password, clientsecret, studyuuid = study_center.username,
+    username, password,
+    clientsecret,
+    studyuuid = study_center.username,
     study_center.password, study_center.client_secret, study_center.studyuuid
 
     df_participants = read_database(DatabaseParticipants, db)
@@ -190,7 +195,13 @@ function update_database(::Type{DatabaseDiagnoses}, db)
     participants = unique(df_participants.Participant)
 
     df_baseline = download_and_process_redcap(REDCapS02Baseline, participants)
-    df_followup = download_and_process_redcap(REDCapS02FollowUp, participants)
+
+    df_followup = @chain begin
+        download_and_process_redcap(REDCapS02FollowUp, participants)
+
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
+    end
+
     df_a04 = download_and_process_redcap(REDCapA04, participants)
 
     df_clarification = @chain begin
