@@ -195,7 +195,9 @@ function fields(::Type{REDCapClarification})
         "dips_03d_is",
         "dips_03e_is",
         "dips_psychstoerung_is",
-        "episode_is"
+        "episode_is",
+        "episode_ausp_dep_is",
+        "episode_ausp_man_is"
     ]
 end
 
@@ -410,7 +412,9 @@ function process(::Type{REDCapClarification}, json)
             :dips_erreicht_is => :DIPSReached,
             :date_diagnosis_is => :DIPSDate,
             :dips_psychstoerung_is => :PsychiatricDisorder,
-            :episode_is => :Episode
+            :episode_is => :Episode,
+            :episode_ausp_dep_is => :SeverityDepressiveEpisode,
+            :episode_ausp_man_is => :SeverityManicEpisode
         )
         transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
 
@@ -470,7 +474,19 @@ function process(::Type{REDCapClarification}, json)
                 [:dsm_diagnosecodierung_5_is, :dips_03e_is]
             ] .=>
                 ByRow((c, x) -> ismissing(c) ? c : is_manic_episode(c, x)) .=>
-                    [:ME1, :ME2, :ME3, :ME4, :ME5];
+                    [:ME1, :ME2, :ME3, :ME4, :ME5],
+            :SeverityDepressiveEpisode => ByRow(
+                x -> isequal(x, "1") ? "MildlyDepressed" :
+                     isequal(x, "2") ? "ModeratelyDepressed" :
+                     isequal(x, "3") ? "SeverelyDepressed" :
+                     isequal(x, "4") ? "SeverelyDepressedWithPsychoticFeatures" :
+                     missing
+            ),
+            :SeverityManicEpisode => ByRow(
+                x -> isequal(x, "1") ? "Hypomanic" :
+                     isequal(x, "2") ? "Manic" :
+                     missing
+            );
             renamecols = false
         )
         transform(
@@ -506,6 +522,7 @@ function process(::Type{REDCapClarification}, json)
             :CloseInstanceMania, :CloseInstanceManiaDate,
             :HAMD, :HAMDDate, :YMRS, :YMRSDate,
             :DIPSDate, :DIPSReached, :PsychiatricDisorder, :Episode,
+            :SeverityDepressiveEpisode, :SeverityManicEpisode
             :DepressiveEpisode, :Dysthymia, :ManicEpisode
         )
     end
