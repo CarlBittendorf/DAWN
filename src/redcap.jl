@@ -522,7 +522,7 @@ function process(::Type{REDCapClarification}, json)
             :CloseInstanceMania, :CloseInstanceManiaDate,
             :HAMD, :HAMDDate, :YMRS, :YMRSDate,
             :DIPSDate, :DIPSReached, :PsychiatricDisorder, :Episode,
-            :SeverityDepressiveEpisode, :SeverityManicEpisode
+            :SeverityDepressiveEpisode, :SeverityManicEpisode,
             :DepressiveEpisode, :Dysthymia, :ManicEpisode
         )
     end
