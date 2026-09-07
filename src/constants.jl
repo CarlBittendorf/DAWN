@@ -192,14 +192,15 @@ const DOMAIN_C_COLOR = colorant"#02738D"
 
 const PALETTE = [PRIMARY_COLOR, SECONDARY_COLOR, DOMAIN_A_COLOR, DOMAIN_B_COLOR]
 
-const BLUE, ORANGE, GREEN, PURPLE, LIGHTBLUE, RED, YELLOW = AlgebraOfGraphics.aog_theme().palette.color
+const BLUE, ORANGE, GREEN, PURPLE, LIGHTBLUE, RED,
+YELLOW = AlgebraOfGraphics.aog_theme().palette.color
 
 const CODES_DEPRESSION = [
     # schizoaffective (depressive)
     "25.1", "295.70",
 
     # bipolar (depressive)
-    "31.3", "31.4", "31.5", "31.6", "296.5",
+    "31.3", "31.4", "31.5", "31.6", "31.75", "31.76", "296.5",
 
     # bipolar (unknown)
     "31.8", "31.9",
@@ -221,7 +222,7 @@ const CODES_MANIA = [
     "30.0", "30.1", "30.2", "30.8", "30.9",
 
     # bipolar (manic)
-    "31.0", "31.1", "31.2", "296.0",
+    "31.0", "31.1", "31.2", "31.71", "31.72", "31.73", "31.74", "296.0",
 
     # bipolar (unknown)
     "31.8", "31.9"
