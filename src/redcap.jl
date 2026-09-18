@@ -243,7 +243,7 @@ function process(::Type{REDCapS02Baseline}, json)
                 [:dsm_diagnosecodierung_4, :dips_03d],
                 [:dsm_diagnosecodierung_5, :dips_03e]
             ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
-            renamecols = false
+            renamecols=false
         )
         transform(
             All() => ByRow((x...) -> "S02Baseline") => :DIPSOrigin,
@@ -288,7 +288,7 @@ function process(::Type{REDCapS02FollowUp}, json)
                 [:dsm_diagnosecodierung_4_t2, :dips_03d_t2],
                 [:dsm_diagnosecodierung_5_t2, :dips_03e_t2]
             ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
-            renamecols = false
+            renamecols=false
         )
         transform(
             All() => ByRow((x...) -> "S02FollowUp") => :DIPSOrigin,
@@ -317,7 +317,7 @@ function process(::Type{REDCapMovisensXS}, json)
 
         transform(
             :EntryCreatedDateTime => ByRow(x -> x == "[not completed]" ? "" : x);
-            renamecols = false
+            renamecols=false
         )
         transform(
             :Participant => ByRow(x -> x isa Int ? lpad(x, 4, "0") : string(x)),
@@ -325,7 +325,7 @@ function process(::Type{REDCapMovisensXS}, json)
             [:Location, :LocationDresden] => ByRow(clean_study_center) => :StudyCenter,
             :EntryCreatedDateTime => ByRow(x -> x == "" ? missing : Date(x[1:10])),
             :AssignmentDate => ByRow(x -> x == "" ? missing : Date(x));
-            renamecols = false
+            renamecols=false
         )
         transform([:EntryCreatedDateTime, :AssignmentDate] =>
             ByRow((x, y) -> coalesce(x, y)) => :AssignmentDate)
@@ -362,7 +362,7 @@ function process(::Type{REDCapSubprojects}, json)
         transform(
             Cols(x -> endswith(x, r"Included|Finalized")) .=> ByRow(isequal("1")),
             Cols(endswith("Date")) .=> ByRow(x -> x != "" ? Date(x[1:10]) : missing);
-            renamecols = false
+            renamecols=false
         )
 
         select(names)
@@ -416,10 +416,10 @@ function process(::Type{REDCapClarification}, json)
             :episode_ausp_dep_is => :SeverityDepressiveEpisode,
             :episode_ausp_man_is => :SeverityManicEpisode
         )
-        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
+        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols=false)
 
         groupby([:Participant, :Instance])
-        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+        combine(All() .=> (x -> coalesce(x...)); renamecols=false)
 
         transform(
             :InflectionSignalType => ByRow(
@@ -487,7 +487,7 @@ function process(::Type{REDCapClarification}, json)
                      isequal(x, "2") ? "Manic" :
                      missing
             );
-            renamecols = false
+            renamecols=false
         )
         transform(
             :TelephoneNoCallNotes => ByRow(x -> isempty(x) ? missing : first(x)),
@@ -498,16 +498,16 @@ function process(::Type{REDCapClarification}, json)
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
             [:DY1, :DY2, :DY3, :DY4, :DY5] => ByRow((x...) -> any(x)) => :Dysthymia,
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode;
-            renamecols = false
+            renamecols=false
         )
         transform(
             [
-            [:DepressiveEpisode, :PsychiatricDisorder],
-            [:Dysthymia, :PsychiatricDisorder],
-            [:ManicEpisode, :PsychiatricDisorder]
-        ] .=>
-            ByRow((x, d) -> !ismissing(d) && ismissing(x) ? false : x) .=>
-                [:DepressiveEpisode, :Dysthymia, :ManicEpisode]
+                [:DepressiveEpisode, :PsychiatricDisorder],
+                [:Dysthymia, :PsychiatricDisorder],
+                [:ManicEpisode, :PsychiatricDisorder]
+            ] .=>
+                ByRow((x, d) -> !ismissing(d) && ismissing(x) ? false : x) .=>
+                    [:DepressiveEpisode, :Dysthymia, :ManicEpisode]
         )
 
         select(
@@ -555,7 +555,7 @@ function process(::Type{REDCapA04}, json)
                 [:dsm_diagnosecodierung_4_a04, :dips_03d_a04],
                 [:dsm_diagnosecodierung_5_a04, :dips_03e_a04]
             ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
-            renamecols = false
+            renamecols=false
         )
         transform(
             All() => ByRow((x...) -> "A04") => :DIPSOrigin,
@@ -602,25 +602,34 @@ function redcap_api_request(token, parameters)
         parameters...
     ))
 
-    response = HTTP.post(
-        "https://redcap.zih.tu-dresden.de/redcap/api/",
-        ["Content-Type" => "application/x-www-form-urlencoded"];
-        body,
-        pool = HTTP.Pool(1),
-        status_exception = false,
-        logerrors = true,
-        retries = 10
-    )
+    transport = HTTP.Transport(max_conns_per_host=1, max_idle_per_host=1,)
+    client = HTTP.Client(transport=transport,)
 
-    if response.status == 200
-        return @chain response.body begin
-            String
-            JSON.parse
+    try
+        response = HTTP.post(
+            "https://redcap.zih.tu-dresden.de/redcap/api/",
+            ["Content-Type" => "application/x-www-form-urlencoded"];
+            body=body,
+            client=client,
+            status_exception=false,
+            logerrors=true,
+            retry=true,
+            retries=10,
+        )
+
+        if response.status == 200
+            return @chain response.body begin
+                String
+                JSON.parse
+            end
+        else
+            @warn "REDCap API request failed:" response
+
+            return nothing
         end
-    else
-        @warn "REDCap API request failed:" response
 
-        return nothing
+    finally
+        close(client)
     end
 end
 
@@ -681,7 +690,7 @@ function upload_signal(project::Type{REDCapSignals}, signal::Signal{T}) where {T
         )
         filter(x -> x["redcap_repeat_instrument"] in instruments, _)
         getindex.("redcap_repeat_instance")
-        maximum(; init = 0)
+        maximum(; init=0)
     end
 
     logdate = Dates.format(now(tz"Europe/Berlin"), "yyyy-mm-dd HH:MM:SS")
