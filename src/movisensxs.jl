@@ -1,5 +1,5 @@
 
-function movisensxs_api_request(url, key; headers = [])
+function movisensxs_api_request(url, key; headers=[])
     response = HTTP.get(
         url,
         [
@@ -7,9 +7,9 @@ function movisensxs_api_request(url, key; headers = [])
             "User-Agent" => "Julia API",
             headers...
         ];
-        status_exception = false,
-        logerrors = true,
-        retries = 10
+        status_exception=false,
+        logerrors=true,
+        retries=10
     )
 
     if response.status == 200
@@ -24,7 +24,7 @@ end
 function download_movisensxs_unisens(studyid, key, participantid)
     body = movisensxs_api_request(
         "https://xs.movisens.com/api/v2/studies/" * studyid * "/probands/" * participantid *
-        "/unisens", key
+            "/unisens", key
     )
 
     if body !== nothing
@@ -54,8 +54,10 @@ function get_mobile_sensing_dates(result)
     start = @chain folder.files begin
         findfirst(x -> x.name == "unisens.xml", _)
         folder.files[_]
-        XML.read(XML.Node)
-        _[2]["timestampStart"]
+        read(XML.Node)
+        XML.elements
+        only
+        _["timestampStart"]
         DateTime
     end
 
@@ -63,7 +65,7 @@ function get_mobile_sensing_dates(result)
         # find and read the DeviceRunning.csv file
         findfirst(x -> x.name == "DeviceRunning.csv", _)
         folder.files[_]
-        CSV.read(DataFrame; header = ["SecondsSinceStart", "DeviceRunning"])
+        CSV.read(DataFrame; header=["SecondsSinceStart", "DeviceRunning"])
 
         # calculate the datetime of each entry
         getproperty(:SecondsSinceStart)
@@ -110,7 +112,7 @@ function download_movisensxs_running(df_movisensxs, studyid, key)
             # remove duplicate dates
             df = @chain df begin
                 groupby([:Participant, :Date])
-                combine(All() .=> first; renamecols = false)
+                combine(All() .=> first; renamecols=false)
             end
 
             df_running = vcat(df_running, df)
