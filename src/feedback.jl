@@ -23,21 +23,21 @@
 
 abstract type AbstractFeedback end
 
-struct Feedback{T <: AbstractFeedback}
+struct Feedback{T<:AbstractFeedback}
     participant::Participant
 
     # feedback table
     table::DataFrame
 
     # feedback-specific metadata
-    data::Vector{Pair{String, Any}}
+    data::Vector{Pair{String,Any}}
 end
 
 function Feedback(
-        T::Type{<:AbstractFeedback},
-        participant::Participant,
-        table::DataFrame,
-        data::Vector{Pair{String, Any}}
+    T::Type{<:AbstractFeedback},
+    participant::Participant,
+    table::DataFrame,
+    data::Vector{Pair{String,Any}}
 )
     return Feedback{T}(participant, table, data)
 end
@@ -85,7 +85,7 @@ function detect(::Type{FeedbackB01}, participant::Participant, df::DataFrame, cu
                 :Date => enumerate_blocks => :Block,
                 :Date => (x -> eachindex(x)) => :Instance
             )
-            subset(:Block => (x -> x .== maximum(x; init = 1)))
+            subset(:Block => (x -> x .== maximum(x; init=1)))
             transform(
                 :Date => (x -> eachindex(x)) => :Day,
                 :NegativeEventIntensityMoment =>
@@ -100,7 +100,7 @@ function detect(::Type{FeedbackB01}, participant::Participant, df::DataFrame, cu
                 :Compensation => cumsum => :CumulativeCompensation
             )
             transform([:Day, :CumulativeItems] =>
-                ByRow((d, x) -> round(100 * x / (73 * d); digits = 2)) =>
+                ByRow((d, x) -> round(100 * x / (73 * d); digits=2)) =>
                     :CumulativeCompliance)
             transform(:CumulativeCompliance =>
                 ByRow(x -> COMPENSATION_B01_BONUS[min(floor(Int, x), 100)]) => :Bonus)
@@ -114,13 +114,13 @@ function detect(::Type{FeedbackB01}, participant::Participant, df::DataFrame, cu
                     _,
                     ["Total", "", sum(_.Prompts), sum(_.Items),
                         sum(_.Compensation), last(_.Bonus)];
-                    promote = true
+                    promote=true
                 )
 
                 transform(
                     :Compensation => ByRow(format_compensation),
                     :Bonus => ByRow(format_compensation);
-                    renamecols = false
+                    renamecols=false
                 )
             end
 
@@ -164,7 +164,7 @@ function detect(::Type{FeedbackB05}, participant::Participant, df::DataFrame, cu
             )
             transform(:Prompts => cumsum => :CumulativePrompts)
             transform([:Day, :CumulativePrompts] =>
-                ByRow((d, x) -> round(100 * x / (4 * d); digits = 2)) =>
+                ByRow((d, x) -> round(100 * x / (4 * d); digits=2)) =>
                     :CumulativeCompliance)
             transform(:CumulativeCompliance =>
                 ByRow(x -> COMPENSATION_B05[floor(Int, x)]) => :Compensation)
@@ -177,10 +177,10 @@ function detect(::Type{FeedbackB05}, participant::Participant, df::DataFrame, cu
                 push!(
                     _,
                     ["Total", sum(_.Prompts), sum(_.Items), last(_.Compensation)];
-                    promote = true
+                    promote=true
                 )
 
-                transform(:Compensation => ByRow(format_compensation); renamecols = false)
+                transform(:Compensation => ByRow(format_compensation); renamecols=false)
             end
 
             data = [
@@ -217,21 +217,22 @@ function detect(::Type{FeedbackC01}, participant::Participant, df::DataFrame, cu
 
                     groupby(:Week)
                     combine(
-                        :Date => (x -> minimum(x; init = cutoff)) => :Start,
-                        :Date => (x -> maximum(x; init = cutoff - Day(180))) => :End,
+                        :Date => (x -> minimum(x; init=cutoff)) => :Start,
+                        :Date => (x -> maximum(x; init=cutoff - Day(180))) => :End,
                         :NegativeEventIntensityMoment =>
                             (x -> count(isvalid, vcat(x...))) => :Prompts
                     )
 
                     sort(:Week)
-                    transform(:Prompts =>
-                        ByRow(x -> round(100 * x / (5 * 7); digits = 2)) => :Compliance)
-                    transform(:Compliance =>
-                        ByRow(x -> COMPENSATION_C01_INTENSE_SAMPLING[floor(Int, x)]) =>
-                            :Compensation)
-                    transform(:Prompts => cumsum => :CumulativePrompts)
+                    transform(
+                        :Prompts => ByRow(x -> 100 * x / (5 * 7)) => :Compliance,
+                        :Prompts => cumsum => :CumulativePrompts
+                    )
                     transform(:CumulativePrompts =>
                         (x -> 100 * x ./ (5 * 7 * eachindex(x))) => :CumulativeCompliance)
+                    transform(:CumulativeCompliance =>
+                        ByRow(x -> COMPENSATION_C01_INTENSE_SAMPLING[floor(Int, x)]) =>
+                            :Compensation)
                 end
 
                 table = @chain df_c01 begin
@@ -241,13 +242,13 @@ function detect(::Type{FeedbackC01}, participant::Participant, df::DataFrame, cu
                         _,
                         ["Total", sum(_.Prompts),
                             last(df_c01.CumulativeCompliance), last(_.Compensation)];
-                        promote = true
+                        promote=true
                     )
 
                     transform(
                         :Compliance => ByRow(x -> format_compliance(x / 100)),
                         :Compensation => ByRow(format_compensation);
-                        renamecols = false
+                        renamecols=false
                     )
                 end
 
@@ -271,8 +272,8 @@ function detect(::Type{FeedbackC01}, participant::Participant, df::DataFrame, cu
                     # for each week, calculate the number of days the participant trained
                     groupby(:Week)
                     combine(
-                        :Date => (x -> minimum(x; init = cutoff)) => :Start,
-                        :Date => (x -> maximum(x; init = cutoff - Day(180))) => :End,
+                        :Date => (x -> minimum(x; init=cutoff)) => :Start,
+                        :Date => (x -> maximum(x; init=cutoff - Day(180))) => :End,
                         :Training => count => :Training
                     )
 
@@ -291,12 +292,12 @@ function detect(::Type{FeedbackC01}, participant::Participant, df::DataFrame, cu
                     push!(
                         _,
                         ["Total", sum(_.Training), sum(_.Compensation)];
-                        promote = true
+                        promote=true
                     )
 
                     transform(
                         :Compensation => ByRow(format_compensation);
-                        renamecols = false
+                        renamecols=false
                     )
                 end
 
@@ -340,7 +341,7 @@ function detect(::Type{FeedbackC03}, participant::Participant, df::DataFrame, cu
                     sort(:B05DayCounter)
                     transform(:Prompts => cumsum => :CumulativePrompts)
                     transform([:Day, :CumulativePrompts] =>
-                        ByRow((d, x) -> round(100 * x / (2 * d); digits = 2)) =>
+                        ByRow((d, x) -> round(100 * x / (2 * d); digits=2)) =>
                             :CumulativeCompliance)
                     transform(:CumulativeCompliance =>
                         ByRow(x -> COMPENSATION_C03_PARTNER[min(floor(Int, x), 100)]) =>
@@ -353,12 +354,12 @@ function detect(::Type{FeedbackC03}, participant::Participant, df::DataFrame, cu
                     push!(
                         _,
                         ["Total", sum(_.Prompts), last(_.Compensation)];
-                        promote = true
+                        promote=true
                     )
 
                     transform(
                         :Compensation => ByRow(format_compensation);
-                        renamecols = false
+                        renamecols=false
                     )
                 end
 
@@ -405,12 +406,12 @@ function detect(::Type{FeedbackC03}, participant::Participant, df::DataFrame, cu
                     push!(
                         _,
                         ["Total", sum(_.Exercise), sum(_.Prompts), sum(_.Compensation)];
-                        promote = true
+                        promote=true
                     )
 
                     transform(
                         :Compensation => ByRow(format_compensation);
-                        renamecols = false
+                        renamecols=false
                     )
                 end
 
@@ -445,17 +446,17 @@ function detect(::Type{FeedbackS01}, participant::Participant, df::DataFrame, cu
         if nrow(df_s01) >= 1
             df_s01 = @chain df_s01 begin
                 transform(:Date =>
-                    (x -> Dates.value.(x .- minimum(x; init = cutoff)) .+ 1) => :Day)
+                    (x -> Dates.value.(x .- minimum(x; init=cutoff)) .+ 1) => :Day)
                 transform(:Day => ByRow(x -> ceil(Int, x / 30)) => :Block)
 
                 groupby(:Block)
                 combine(
-                    :Date => (x -> minimum(x; init = cutoff)) => :Start,
-                    :Date => (x -> maximum(x; init = cutoff - Day(1000))) => :End,
+                    :Date => (x -> minimum(x; init=cutoff)) => :Start,
+                    :Date => (x -> maximum(x; init=cutoff - Day(1000))) => :End,
                     :ChronoRecord =>
-                        (x -> round(100 * count(isvalid, x) / 30; digits = 2)) =>
+                        (x -> round(100 * count(isvalid, x) / 30; digits=2)) =>
                             :Compliance;
-                    renamecols = false
+                    renamecols=false
                 )
             end
 
@@ -465,7 +466,7 @@ function detect(::Type{FeedbackS01}, participant::Participant, df::DataFrame, cu
 
                 transform(
                     :Compliance => ByRow(x -> format_compliance(x / 100));
-                    renamecols = false
+                    renamecols=false
                 )
             end
 
@@ -583,10 +584,10 @@ Workflow:
 Only non-`nothing` detection results are returned.
 """
 function detect_feedback(
-        participants::Vector{Participant},
-        df::DataFrame;
-        feedback = subtypes(AbstractFeedback),
-        cutoff::Date = Date(now()) - Day(1)
+    participants::Vector{Participant},
+    df::DataFrame;
+    feedback=subtypes(AbstractFeedback),
+    cutoff::Date=Date(now()) - Day(1)
 )
     # restrict data to observations on or before the cutoff date
     df_data = subset(df, :Date => ByRow(x -> x <= cutoff))
