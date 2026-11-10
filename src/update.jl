@@ -92,19 +92,19 @@ function update_database(::Type{DatabaseParticipants}, db, study_center)
             studyuuid,
             participantuuids,
             [VARIABLE_GROUP];
-            cutofftime = floor(now(), Day) + Hour(3) + Minute(30),
-            hoursinpast = 24
+            cutofftime=floor(now(), Day) + Hour(3) + Minute(30),
+            hoursinpast=24
         )
 
         # get the latest group of each available participant
         groupby(:Participant)
-        subset(:DateTime => (x -> x .== maximum(x; init = now() - Year(1))))
+        subset(:DateTime => (x -> x .== maximum(x; init=now() - Year(1))))
 
-        transform(:Value => ByRow(x -> GROUPS[x + 1]) => :InteractionDesignerGroup)
+        transform(:Value => ByRow(x -> GROUPS[x+1]) => :InteractionDesignerGroup)
 
         select(:Participant, :InteractionDesignerGroup)
 
-        leftjoin(select(df_participants, Not(:InteractionDesignerGroup)); on = :Participant)
+        leftjoin(select(df_participants, Not(:InteractionDesignerGroup)); on=:Participant)
         dropmissing
     end
 
@@ -114,7 +114,7 @@ function update_database(::Type{DatabaseParticipants}, db, study_center)
 
     df_centers = @chain df_movisensxs begin
         groupby(:Participant)
-        transform(:StudyCenter => (x -> coalesce(reverse(x)...)); renamecols = false)
+        transform(:StudyCenter => (x -> coalesce(reverse(x)...)); renamecols=false)
 
         dropmissing(:StudyCenter)
 
@@ -132,7 +132,7 @@ function update_database(::Type{DatabaseParticipants}, db, study_center)
         sort(:Participant)
 
         # add :StudyCenter column
-        leftjoin(df_centers; on = :Participant)
+        leftjoin(df_centers; on=:Participant)
     end
 
     create_or_replace_database(DatabaseParticipants, db, df_participants)
@@ -155,8 +155,8 @@ function update_database(::Type{DatabaseQueries}, db, study_center)
             studyuuid,
             participantuuids,
             VARIABLES_DATABASE;
-            cutofftime = floor(now(), Day) + Hour(5) + Minute(30),
-            hoursinpast = 24
+            cutofftime=floor(now(), Day) + Hour(5) + Minute(30),
+            hoursinpast=24
         )
 
         vcat(read_database(DatabaseQueries, db), _)
@@ -194,7 +194,11 @@ function update_database(::Type{DatabaseDiagnoses}, db)
     df_participants = read_database(DatabaseParticipants, db)
     participants = unique(df_participants.Participant)
 
-    df_baseline = download_and_process_redcap(REDCapS02Baseline, participants)
+    df_baseline = @chain begin
+        download_and_process_redcap(REDCapS02Baseline, participants)
+
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
+    end
 
     df_followup = @chain begin
         download_and_process_redcap(REDCapS02FollowUp, participants)

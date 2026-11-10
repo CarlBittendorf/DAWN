@@ -83,7 +83,8 @@ function fields(::Type{REDCapS02Baseline})
         "dips_03b",
         "dips_03c",
         "dips_03d",
-        "dips_03e"
+        "dips_03e",
+        "pat_gruppe"
     ]
 end
 
@@ -197,7 +198,11 @@ function fields(::Type{REDCapClarification})
         "dips_psychstoerung_is",
         "episode_is",
         "episode_ausp_dep_is",
-        "episode_ausp_man_is"
+        "episode_ausp_man_is",
+        "beschwerden_dep_is",
+        "beschwerden_man_is",
+        "start_epi_dep_is",
+        "start_epi_man_is"
     ]
 end
 
@@ -219,6 +224,8 @@ function fields(::Type{REDCapA04})
 end
 
 function process(::Type{REDCapS02Baseline}, json)
+    groups = ["HC", "MDD", "BD", "SCZ", "SZA", "Other"]
+
     @chain json begin
         DataFrame
         rename(
@@ -248,10 +255,11 @@ function process(::Type{REDCapS02Baseline}, json)
         transform(
             All() => ByRow((x...) -> "S02Baseline") => :DIPSOrigin,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
-            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
+            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode,
+            :pat_gruppe => ByRow(x -> ismissing(x) ? x : groups[parse(Int, x)+1]) => :Group
         )
 
-        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode, :Group)
     end
 end
 
@@ -414,7 +422,11 @@ function process(::Type{REDCapClarification}, json)
             :dips_psychstoerung_is => :PsychiatricDisorder,
             :episode_is => :Episode,
             :episode_ausp_dep_is => :SeverityDepressiveEpisode,
-            :episode_ausp_man_is => :SeverityManicEpisode
+            :episode_ausp_man_is => :SeverityManicEpisode,
+            :beschwerden_dep_is => :StartDepressiveSymptoms,
+            :beschwerden_man_is => :StartManicSymptoms,
+            :start_epi_dep_is => :StartDepressiveEpisode,
+            :start_epi_man_is => :StartManicEpisode
         )
         transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols=false)
 
@@ -432,7 +444,9 @@ function process(::Type{REDCapClarification}, json)
                 :InflectionManiaFirstDate, :InflectionManiaSecondDate,
                 :CloseInstanceDepressionDate, :CloseInstanceManiaDate,
                 :TelephoneDate, :HAMDDate, :HAMDDateInterviewer,
-                :YMRSDate, :YMRSDateInterviewer, :DIPSDate
+                :YMRSDate, :YMRSDateInterviewer, :DIPSDate,
+                :StartDepressiveSymptoms, :StartManicSymptoms,
+                :StartDepressiveEpisode, :StartManicEpisode
             ] .=> ByRow(x -> ismissing(x) ? x : Date(x[1:10])),
             [
                 :InflectionDepressionFirstValue, :InflectionDepressionSecondValue,
@@ -523,7 +537,9 @@ function process(::Type{REDCapClarification}, json)
             :HAMD, :HAMDDate, :YMRS, :YMRSDate,
             :DIPSDate, :DIPSReached, :PsychiatricDisorder, :Episode,
             :SeverityDepressiveEpisode, :SeverityManicEpisode,
-            :DepressiveEpisode, :Dysthymia, :ManicEpisode
+            :DepressiveEpisode, :Dysthymia, :ManicEpisode,
+            :StartDepressiveSymptoms, :StartManicSymptoms,
+            :StartDepressiveEpisode, :StartManicEpisode
         )
     end
 end
