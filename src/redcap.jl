@@ -230,7 +230,8 @@ function process(::Type{REDCapS02Baseline}, json)
         DataFrame
         rename(
             :participant_id => :Participant,
-            :date => :DIPSDate
+            :date => :DIPSDate,
+            :pat_gruppe => :Group
         )
 
         subset(:DIPSDate => ByRow(!isequal("")))
@@ -249,14 +250,14 @@ function process(::Type{REDCapS02Baseline}, json)
                 [:dsm_diagnosecodierung_3, :dips_03c],
                 [:dsm_diagnosecodierung_4, :dips_03d],
                 [:dsm_diagnosecodierung_5, :dips_03e]
-            ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5];
+            ] .=> ByRow(is_manic_episode) .=> [:ME1, :ME2, :ME3, :ME4, :ME5],
+            :Group => ByRow(x -> ismissing(x) || x == "" ? x : groups[parse(Int, x)+1]);
             renamecols=false
         )
         transform(
             All() => ByRow((x...) -> "S02Baseline") => :DIPSOrigin,
             [:DE1, :DE2, :DE3, :DE4, :DE5] => ByRow((x...) -> any(x)) => :DepressiveEpisode,
-            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode,
-            :pat_gruppe => ByRow(x -> ismissing(x) ? x : groups[parse(Int, x)+1]) => :Group
+            [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
         )
 
         select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode, :Group)
