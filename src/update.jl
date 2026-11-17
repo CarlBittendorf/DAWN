@@ -206,7 +206,11 @@ function update_database(::Type{DatabaseDiagnoses}, db)
         select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
     end
 
-    df_a04 = download_and_process_redcap(REDCapA04, participants)
+    df_a04 = @chain begin
+        download_and_process_redcap(REDCapA04, participants)
+
+        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
+    end
 
     df_clarification = @chain begin
         download_and_process_redcap(REDCapClarification, participants)

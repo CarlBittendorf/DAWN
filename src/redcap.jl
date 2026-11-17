@@ -220,7 +220,8 @@ function fields(::Type{REDCapA04})
         "dips_03b_a04",
         "dips_03c_a04",
         "dips_03d_a04",
-        "dips_03e_a04"
+        "dips_03e_a04",
+        "episode_is_a04"
     ]
 end
 
@@ -284,6 +285,11 @@ function process(::Type{REDCapS02FollowUp}, json)
         subset(:DIPSDate => ByRow(!isequal("")))
         transform(
             :DIPSDate => ByRow(x -> Date(x[1:10])),
+            [:NumberDepressiveEpisodes, :NumberManicEpisodes] .=> ByRow(x -> x == "" ? missing : parse(Int, x)),
+            [
+                :MonthsDepressiveState, :MonthsSubclinicalDepressiveSymptoms,
+                :MonthsManicState, :MonthsSubclinicalManicSymptoms
+            ] .=> ByRow(x -> x == "" ? missing : parse(Float64, x)),
             [
                 [:dsm_diagnosecodierung_1_t2, :dips_03a_t2],
                 [:dsm_diagnosecodierung_2_t2, :dips_03b_t2],
@@ -556,12 +562,14 @@ function process(::Type{REDCapA04}, json)
         DataFrame
         rename(
             :participant_id => :Participant,
-            :datum_dips_a04 => :DIPSDate
+            :datum_dips_a04 => :DIPSDate,
+            :episode_is_a04 => :EpisodeSinceInflectionSignal
         )
 
         subset(:DIPSDate => ByRow(!isequal("")))
         transform(
             :DIPSDate => ByRow(x -> Date(x[1:10])),
+            :EpisodeSinceInflectionSignal => ByRow(x -> x == "" ? missing : x == "1"),
             [
                 [:dsm_diagnosecodierung_1_a04, :dips_03a_a04],
                 [:dsm_diagnosecodierung_2_a04, :dips_03b_a04],
@@ -584,7 +592,10 @@ function process(::Type{REDCapA04}, json)
             [:ME1, :ME2, :ME3, :ME4, :ME5] => ByRow((x...) -> any(x)) => :ManicEpisode
         )
 
-        select(:Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode)
+        select(
+            :Participant, :DIPSDate, :DIPSOrigin, :DepressiveEpisode, :ManicEpisode,
+            :EpisodeSinceInflectionSignal
+        )
     end
 end
 
