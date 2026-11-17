@@ -202,7 +202,8 @@ function fields(::Type{REDCapClarification})
         "beschwerden_dep_is",
         "beschwerden_man_is",
         "start_epi_dep_is",
-        "start_epi_man_is"
+        "start_epi_man_is",
+        "subdep_is"
     ]
 end
 
@@ -427,7 +428,8 @@ function process(::Type{REDCapClarification}, json)
             :beschwerden_dep_is => :StartDepressiveSymptoms,
             :beschwerden_man_is => :StartManicSymptoms,
             :start_epi_dep_is => :StartDepressiveEpisode,
-            :start_epi_man_is => :StartManicEpisode
+            :start_epi_man_is => :StartManicEpisode,
+            :subdep_is => :SubclinicalDepression
         )
         transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols=false)
 
@@ -457,7 +459,8 @@ function process(::Type{REDCapClarification}, json)
             [
                 :TelephoneReached, :Participation, :Exclusion,
                 :CloseInstanceDepression, :CloseInstanceMania,
-                :DIPSReached, :PsychiatricDisorder, :Episode
+                :DIPSReached, :PsychiatricDisorder, :Episode,
+                :SubclinicalDepression
             ] .=> ByRow(x -> ismissing(x) ? x : x == "1"),
             [
                 :is_kein_telefonkontakt___1, :is_kein_telefonkontakt___2, :is_kein_telefonkontakt___3,
@@ -540,7 +543,8 @@ function process(::Type{REDCapClarification}, json)
             :SeverityDepressiveEpisode, :SeverityManicEpisode,
             :DepressiveEpisode, :Dysthymia, :ManicEpisode,
             :StartDepressiveSymptoms, :StartManicSymptoms,
-            :StartDepressiveEpisode, :StartManicEpisode
+            :StartDepressiveEpisode, :StartManicEpisode,
+            :SubclinicalDepression
         )
     end
 end
