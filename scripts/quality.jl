@@ -19,7 +19,9 @@ function script()
         select(:Participant, :CodeS02Baseline)
     end
 
+    df_followup = process(REDCapS02FollowUp, json_followup)
     df_clarification = process(REDCapClarification, json_clarification)
+    df_a04 = process(REDCapA04, json_a04)
 
     tables = Hyperscript.Node[]
 
@@ -29,8 +31,7 @@ function script()
 
     @chain df_clarification begin
         subset(
-            [:InflectionDepressionFirstValue, :InflectionManiaFirstValue]
-            =>
+            [:InflectionDepressionFirstValue, :InflectionManiaFirstValue] =>
                 ByRow((d, m) -> ismissing(d) && ismissing(m)),
             :TelephoneNoCallNotes => ByRow(!isequal("InvalidSignal"))
         )
@@ -45,8 +46,7 @@ function script()
     end
 
     @chain df_clarification begin
-        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
-        =>
+        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate] =>
             ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
         dropmissing(:SignalDate)
 
@@ -163,8 +163,7 @@ function script()
     end
 
     @chain df_clarification begin
-        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
-        =>
+        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate] =>
             ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
         dropmissing(:SignalDate)
 
@@ -181,8 +180,7 @@ function script()
     end
 
     @chain df_clarification begin
-        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate]
-        =>
+        transform([:InflectionDepressionSecondDate, :InflectionManiaSecondDate] =>
             ByRow((x...) -> coalesce(x...) + Day(1)) => :SignalDate)
         dropmissing([:SignalDate, :TelephoneDate])
         transform([:SignalDate, :TelephoneDate] => ByRow((s, t) -> t - s) => :Difference)
@@ -199,8 +197,7 @@ function script()
     end
 
     @chain df_clarification begin
-        subset([:HAMD, :TelephoneReached]
-        =>
+        subset([:HAMD, :TelephoneReached] =>
             ByRow((h, t) -> !ismissing(h) && (ismissing(t) || !t)))
 
         select(:Participant, :Instance, :TelephoneReached, :HAMD, :HAMDDate)
@@ -214,8 +211,7 @@ function script()
     end
 
     @chain df_clarification begin
-        subset([:YMRS, :TelephoneReached]
-        =>
+        subset([:YMRS, :TelephoneReached] =>
             ByRow((y, t) -> !ismissing(y) && (ismissing(t) || !t)))
 
         select(:Participant, :Instance, :TelephoneReached, :YMRS, :YMRSDate)
@@ -245,8 +241,7 @@ function script()
     end
 
     @chain df_clarification begin
-        subset([:HAMD, :TelephoneInterviewer]
-        =>
+        subset([:HAMD, :TelephoneInterviewer] =>
             ByRow((h, i) -> !ismissing(h) && (ismissing(i) || i == "-")))
 
         select(:Participant, :Instance, :HAMD, :HAMDDate)
@@ -255,8 +250,7 @@ function script()
     end
 
     @chain df_clarification begin
-        subset([:YMRS, :TelephoneInterviewer]
-        =>
+        subset([:YMRS, :TelephoneInterviewer] =>
             ByRow((y, i) -> !ismissing(y) && (ismissing(i) || i == "-")))
 
         select(:Participant, :Instance, :YMRS, :YMRSDate)
@@ -380,15 +374,14 @@ function script()
             :participant_id => :Participant,
             :redcap_repeat_instance => :Instance
         )
-        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
+        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols=false)
 
         groupby([:Participant, :Instance])
-        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+        combine(All() .=> (x -> coalesce(x...)); renamecols=false)
 
         transform([:dsm_diagnosecodierung_1_is, :dsm_diagnosecodierung_2_is,
             :dsm_diagnosecodierung_3_is, :dsm_diagnosecodierung_4_is,
-            :dsm_diagnosecodierung_5_is]
-        =>
+            :dsm_diagnosecodierung_5_is] =>
             ByRow((x...) -> [filter(!ismissing, x)...]) => :Codes)
 
         subset(:Codes => ByRow(x -> any(s -> occursin(r"^(?!\d{2}\.\d{1,2}$).+", s), x)))
@@ -411,16 +404,16 @@ function script()
             :redcap_repeat_instance => :Instance,
             :dsm_diagnosecodierung_1_is => :CodeClarification
         )
-        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols = false)
+        transform(All() .=> ByRow(x -> x == "" ? missing : x); renamecols=false)
 
         groupby([:Participant, :Instance])
-        combine(All() .=> (x -> coalesce(x...)); renamecols = false)
+        combine(All() .=> (x -> coalesce(x...)); renamecols=false)
 
         dropmissing(:CodeClarification)
 
         select(:Participant, :CodeClarification, :Instance)
 
-        leftjoin(df_baseline, _; on = :Participant)
+        leftjoin(df_baseline, _; on=:Participant)
 
         dropmissing
         subset(:CodeClarification => ByRow(!isequal("")))
@@ -445,7 +438,7 @@ function script()
 
         select(:Participant, :CodeS02FollowUp)
 
-        leftjoin(df_baseline, _; on = :Participant)
+        leftjoin(df_baseline, _; on=:Participant)
 
         dropmissing
         subset(:CodeS02FollowUp => ByRow(!isequal("")))
@@ -471,7 +464,7 @@ function script()
 
         select(:Participant, :CodeA04)
 
-        leftjoin(df_baseline, _; on = :Participant)
+        leftjoin(df_baseline, _; on=:Participant)
 
         dropmissing
         subset(:CodeA04 => ByRow(!isequal("")))
@@ -481,6 +474,86 @@ function script()
         add_table!(
             tables,
             "Diagnostic codes at baseline and A04 do not match \
+            (please check if this is correct)",
+            _
+        )
+    end
+
+    @chain df_clarification begin
+        dropmissing(:Episode)
+        subset(:Episode)
+        select(:Participant, :Instance, :SeverityDepressiveEpisode)
+
+        leftjoin(df_followup; on=:Participant)
+
+        dropmissing([:SeverityDepressiveEpisode, :NumberDepressiveEpisodes])
+        subset(:NumberDepressiveEpisodes => ByRow(isequal(0)))
+
+        select(:Participant, :Instance, :SeverityDepressiveEpisode, :NumberDepressiveEpisodes)
+
+        add_table!(
+            tables,
+            "Depressive episode after inflection signal, but S02 follow-up shows no episode \
+            (please check if this is correct)",
+            _
+        )
+    end
+
+    @chain df_clarification begin
+        dropmissing(:Episode)
+        subset(:Episode)
+        select(:Participant, :Instance, :SeverityManicEpisode)
+
+        leftjoin(df_followup; on=:Participant)
+
+        dropmissing([:SeverityManicEpisode, :NumberManicEpisodes])
+        subset(:NumberManicEpisodes => ByRow(isequal(0)))
+
+        select(:Participant, :Instance, :SeverityManicEpisode, :NumberManicEpisodes)
+
+        add_table!(
+            tables,
+            "Manic episode after inflection signal, but S02 follow-up shows no episode \
+            (please check if this is correct)",
+            _
+        )
+    end
+
+    @chain df_clarification begin
+        dropmissing(:SubclinicalDepression)
+        subset(:SubclinicalDepression)
+        select(:Participant, :Instance, :SubclinicalDepression)
+
+        leftjoin(df_followup; on=:Participant)
+
+        dropmissing([:SubclinicalDepression, :MonthsSubclinicalDepressiveSymptoms])
+        subset(:MonthsSubclinicalDepressiveSymptoms => ByRow(isequal(0)))
+
+        select(:Participant, :Instance, :SubclinicalDepression, :MonthsSubclinicalDepressiveSymptoms)
+
+        add_table!(
+            tables,
+            "Subclinical depression after inflection signal, but S02 follow-up shows no subclinical depressive symptoms \
+            (please check if this is correct)",
+            _
+        )
+    end
+
+    @chain df_a04 begin
+        dropmissing(:EpisodeSinceInflectionSignal)
+        subset(:EpisodeSinceInflectionSignal)
+        select(:Participant, :EpisodeSinceInflectionSignal)
+
+        leftjoin(df_followup; on=:Participant)
+
+        dropmissing([:EpisodeSinceInflectionSignal, :NumberDepressiveEpisodes])
+        subset(:NumberDepressiveEpisodes => ByRow(isequal(0)))
+
+        select(:Participant, :EpisodeSinceInflectionSignal, :NumberDepressiveEpisodes)
+
+        add_table!(
+            tables,
+            "Depressive episode after A04 DIPS, but S02 follow-up shows no episode \
             (please check if this is correct)",
             _
         )
