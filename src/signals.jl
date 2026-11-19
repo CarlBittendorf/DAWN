@@ -23,26 +23,26 @@
 
 abstract type AbstractSignal end
 
-struct Signal{T <: AbstractSignal}
+struct Signal{T<:AbstractSignal}
     participant::Participant
 
     # whether the participant is currently receiving intense sampling
     intense_sampling::Bool
 
     # signal-specific metadata
-    data::Vector{Pair{String, Any}}
+    data::Vector{Pair{String,Any}}
 end
 
 function Signal(
-        T::Type{<:AbstractSignal},
-        participant::Participant,
-        df::DataFrame,
-        data::Vector{Pair{String, Any}}
+    T::Type{<:AbstractSignal},
+    participant::Participant,
+    df::DataFrame,
+    data::Vector{Pair{String,Any}}
 )
     return Signal{T}(
         participant,
         last(df.NegativeEventIntensityMoment) isa Vector ||
-        last(df.PercentSocialInteractions) isa Vector,
+            last(df.PercentSocialInteractions) isa Vector,
         data
     )
 end
@@ -108,7 +108,7 @@ function detect(::Type{Initial}, participant::Participant, df::DataFrame, cutoff
 end
 
 function detect(
-        ::Type{InflectionDepression}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{InflectionDepression}, participant::Participant, df::DataFrame, cutoff::Date)
     df_phq = @chain df begin
         lastdays(4, cutoff)
         dropmissing(:PHQ9SumScore)
@@ -117,8 +117,8 @@ function detect(
     end
 
     if nrow(df_phq) == 2 &&
-       last(df_phq.Date) == cutoff &&
-       all(x -> x >= 10, df_phq.PHQ9SumScore)
+        last(df_phq.Date) == cutoff &&
+        all(x -> x >= 10, df_phq.PHQ9SumScore)
         data = [
             "InflectionDepressionFirstDate" => df_phq.Date[1],
             "InflectionDepressionSecondDate" => df_phq.Date[2],
@@ -131,7 +131,7 @@ function detect(
 end
 
 function detect(
-        ::Type{InflectionMania}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{InflectionMania}, participant::Participant, df::DataFrame, cutoff::Date)
     df_asrm = @chain df begin
         lastdays(4, cutoff)
         dropmissing(:ASRM5SumScore)
@@ -140,8 +140,8 @@ function detect(
     end
 
     if nrow(df_asrm) == 2 &&
-       last(df_asrm.Date) == cutoff &&
-       all(x -> x >= 6, df_asrm.ASRM5SumScore)
+        last(df_asrm.Date) == cutoff &&
+        all(x -> x >= 6, df_asrm.ASRM5SumScore)
         data = [
             "InflectionManiaFirstDate" => df_asrm.Date[1],
             "InflectionManiaSecondDate" => df_asrm.Date[2],
@@ -162,8 +162,8 @@ function detect(::Type{Expectation}, participant::Participant, df::DataFrame, cu
     end
 
     if nrow(df_expectation) == 2 &&
-       last(df_expectation.Date) == cutoff &&
-       abs(only(diff(df_expectation.ExpectationMentalHealthProblems))) >= 3
+        last(df_expectation.Date) == cutoff &&
+        abs(only(diff(df_expectation.ExpectationMentalHealthProblems))) >= 3
         data = [
             "ExpectationFirstDate" => df_expectation.Date[1],
             "ExpectationSecondDate" => df_expectation.Date[2],
@@ -176,21 +176,21 @@ function detect(::Type{Expectation}, participant::Participant, df::DataFrame, cu
 end
 
 function detect(
-        ::Type{StressfulLifeEvent}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{StressfulLifeEvent}, participant::Participant, df::DataFrame, cutoff::Date)
     influence = @chain df begin
         lastdays(1, cutoff)
         getproperty(:MajorLifeEventInfluence)
     end
 
     if length(influence) == 1 && isvalid(only(influence)) && only(influence) == 3
-        data = Pair{String, Any}["StressfulLifeEventDate" => cutoff]
+        data = Pair{String,Any}["StressfulLifeEventDate"=>cutoff]
 
         return Signal(StressfulLifeEvent, participant, df, data)
     end
 end
 
 function detect(
-        ::Type{MissingIntenseSampling}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{MissingIntenseSampling}, participant::Participant, df::DataFrame, cutoff::Date)
     if nrow(df) >= 1
         if participant.group in ["B01", "C01 Cognition", "C01 Emotion"]
             alarm = isalarm(
@@ -204,7 +204,7 @@ function detect(
                     y,
                     i
                 ) -> x[i] isa Vector && length(x[i]) == 4 &&
-                     all(isnothing, x[i]) && isnothing(y[i]),
+                    all(isnothing, x[i]) && isnothing(y[i]),
                 df, [:PercentSocialInteractions, :SocialContact], cutoff, 2
             )
         else
@@ -212,7 +212,7 @@ function detect(
         end
 
         if alarm
-            data = Pair{String, Any}["MissingIntenseSamplingDate" => cutoff]
+            data = Pair{String,Any}["MissingIntenseSamplingDate"=>cutoff]
 
             return Signal(MissingIntenseSampling, participant, df, data)
         end
@@ -220,10 +220,10 @@ function detect(
 end
 
 function detect(
-        ::Type{MissingQuestionsProblems}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{MissingQuestionsProblems}, participant::Participant, df::DataFrame, cutoff::Date)
     if nrow(df) >= 1 &&
-       startswith(participant.group, "C01") &&
-       last(df.Date) == cutoff
+        startswith(participant.group, "C01") &&
+        last(df.Date) == cutoff
         missings = nrow(df) >= 2 && all(isnothing, last(df.TrainingSuccess, 2))
         problems = isvalid(last(df.TrainingProblems)) && last(df.TrainingProblems) != 1
         questions = isvalid(last(df.TrainingQuestions)) && last(df.TrainingQuestions) == 1
@@ -242,22 +242,22 @@ function detect(
 end
 
 function detect(
-        ::Type{MissingExercise}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{MissingExercise}, participant::Participant, df::DataFrame, cutoff::Date)
     if nrow(df) >= 1 &&
-       contains(participant.group, "B05/C03") &&
-       participant.group != "Partner B05/C03 Mindfulness" &&
-       isalarm(
-           (x, i) -> count(isnothing, x[max(1, i - 1):i]) == 2 && isnothing(x[i]),
-           df, :ExerciseSuccessful, cutoff, 2
-       )
-        data = Pair{String, Any}["MissingExerciseDate" => cutoff]
+        contains(participant.group, "B05/C03") &&
+        participant.group != "Partner B05/C03 Mindfulness" &&
+        isalarm(
+            (x, i) -> count(isnothing, x[max(1, i-1):i]) == 2 && isnothing(x[i]),
+            df, :ExerciseSuccessful, cutoff, 2
+        )
+        data = Pair{String,Any}["MissingExerciseDate"=>cutoff]
 
         return Signal(MissingExercise, participant, df, data)
     end
 end
 
 function detect(
-        ::Type{SamplingProblem}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{SamplingProblem}, participant::Participant, df::DataFrame, cutoff::Date)
     if nrow(df) >= 2
         if participant.group == "B01"
             df_instance = @chain df begin
@@ -268,13 +268,13 @@ function detect(
             end
 
             df_sampling = @chain df begin
-                leftjoin(df_instance; on = :Date)
+                leftjoin(df_instance; on=:Date)
                 sort(:Date)
 
                 groupby(:Participant)
                 subset(
                     :Date => (x -> isequal(x[end], cutoff)),
-                    :Instance => (x -> isvalid(x[end - 1]) && x[end - 1] % 14 != 0),
+                    :Instance => (x -> isvalid(x[end-1]) && x[end-1] % 14 != 0),
                     :Instance => (x -> !isvalid(x[end]))
                 )
             end
@@ -285,7 +285,7 @@ function detect(
                 groupby(:Participant)
                 subset(
                     :Date => (x -> isequal(x[end], cutoff)),
-                    :C01DayCounter => (x -> isvalid(x[end - 1]) && x[end - 1] < 84),
+                    :C01DayCounter => (x -> isvalid(x[end-1]) && x[end-1] < 84),
                     :C01DayCounter => (x -> !isvalid(x[end]))
                 )
             end
@@ -296,7 +296,7 @@ function detect(
                 groupby(:Participant)
                 subset(
                     :Date => (x -> isequal(x[end], cutoff)),
-                    :B05DayCounter => (x -> isvalid(x[end - 1]) && x[end - 1] < 84),
+                    :B05DayCounter => (x -> isvalid(x[end-1]) && x[end-1] < 84),
                     :B05DayCounter => (x -> !isvalid(x[end]))
                 )
             end
@@ -307,7 +307,7 @@ function detect(
         end
 
         if alarm
-            data = Pair{String, Any}["SamplingProblemDate" => cutoff]
+            data = Pair{String,Any}["SamplingProblemDate"=>cutoff]
 
             return Signal(SamplingProblem, participant, df, data)
         end
@@ -315,7 +315,7 @@ function detect(
 end
 
 function detect(
-        ::Type{SubstanceMore}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{SubstanceMore}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects
         substance = @chain df begin
             lastdays(1, cutoff)
@@ -334,7 +334,7 @@ function detect(
 end
 
 function detect(
-        ::Type{SocialInteractionMore}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{SocialInteractionMore}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects
         interaction = @chain df begin
             lastdays(4, cutoff)
@@ -347,7 +347,7 @@ function detect(
             if avg < 25 || avg > 75
                 data = [
                     "SocialInteractionMoreDate" => cutoff,
-                    "SocialInteractionMoreValue" => round(avg; digits = 2)
+                    "SocialInteractionMoreValue" => round(avg; digits=2)
                 ]
 
                 return Signal(SocialInteractionMore, participant, df, data)
@@ -357,7 +357,7 @@ function detect(
 end
 
 function detect(
-        ::Type{Medication}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{Medication}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects
         medication = @chain df begin
             lastdays(1, cutoff)
@@ -376,18 +376,18 @@ function detect(
 end
 
 function detect(
-        ::Type{SleepDuration}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{SleepDuration}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects && isalarm(
         (
             x,
             i
         ) -> isvalid(x[i]) &&
-             count(isvalid, x[1:i]) >= 5 &&
-             (x[i] < 5 || x[i] > 10) &&
-             count(e -> (e < 5 || e > 10), last(filter(isvalid, x), 5)) >= 3,
+            count(isvalid, x[1:i]) >= 5 &&
+            (x[i] < 5 || x[i] > 10) &&
+            count(e -> (e < 5 || e > 10), last(filter(isvalid, x), 5)) >= 3,
         df, :SleepDuration, cutoff, 4
     )
-        data = Pair{String, Any}["SleepDurationDate" => cutoff]
+        data = Pair{String,Any}["SleepDurationDate"=>cutoff]
 
         return Signal(SleepDuration, participant, df, data)
     end
@@ -399,30 +399,30 @@ function detect(::Type{SleepQuality}, participant::Participant, df::DataFrame, c
             x,
             i
         ) -> isvalid(x[i]) &&
-             count(isvalid, x[1:i]) >= 5 &&
-             x[i] <= 30 &&
-             count(e -> e <= 30, last(filter(isvalid, x), 5)) >= 3,
+            count(isvalid, x[1:i]) >= 5 &&
+            x[i] <= 30 &&
+            count(e -> e <= 30, last(filter(isvalid, x), 5)) >= 3,
         df, :SleepQuality, cutoff, 4
     )
-        data = Pair{String, Any}["SleepQualityDate" => cutoff]
+        data = Pair{String,Any}["SleepQualityDate"=>cutoff]
 
         return Signal(SleepQuality, participant, df, data)
     end
 end
 
 function detect(
-        ::Type{EarlyAwakening}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{EarlyAwakening}, participant::Participant, df::DataFrame, cutoff::Date)
     if "A06" in participant.subprojects && isalarm(
         (
             x,
             i
         ) -> isvalid(x[i]) &&
-             count(isvalid, x[1:i]) >= 5 &&
-             x[i] <= Time("05:00") &&
-             count(e -> e <= Time("05:00"), last(filter(isvalid, x), 3)) >= 3,
+            count(isvalid, x[1:i]) >= 5 &&
+            x[i] <= Time("05:00") &&
+            count(e -> e <= Time("05:00"), last(filter(isvalid, x), 3)) >= 3,
         df, :WakeUp, cutoff, 4
     )
-        data = Pair{String, Any}["EarlyAwakeningDate" => cutoff]
+        data = Pair{String,Any}["EarlyAwakeningDate"=>cutoff]
 
         return Signal(EarlyAwakening, participant, df, data)
     end
@@ -465,7 +465,7 @@ function detect(::Type{SickLeave}, participant::Participant, df::DataFrame, cuto
 end
 
 function detect(
-        ::Type{SymptomRemission}, participant::Participant, df::DataFrame, cutoff::Date)
+    ::Type{SymptomRemission}, participant::Participant, df::DataFrame, cutoff::Date)
     # find the most recent diagnosis
     diagnoses = filter(x -> x.date <= cutoff, participant.diagnoses)
 
@@ -482,16 +482,16 @@ function detect(
 
                 # check if the criteria for symptom remission are met
                 transform(:SymptomFree =>
-                    (x -> map(i -> count(x[max(1, i - 52):i]) == 53, eachindex(x))) =>
+                    (x -> map(i -> count(x[max(1, i-52):i]) == 53, eachindex(x))) =>
                         :SymptomRemission)
 
                 getproperty(:SymptomRemission)
             end
 
             if count(symptom_remission) == 1 &&
-               last(symptom_remission) &&
-               last(df.Date) == cutoff
-                data = Pair{String, Any}["SymptomRemissionDate" => cutoff]
+                last(symptom_remission) &&
+                last(df.Date) == cutoff
+                data = Pair{String,Any}["SymptomRemissionDate"=>cutoff]
 
                 return Signal(SymptomRemission, participant, df, data)
             end
@@ -509,7 +509,6 @@ end
 
 function receiver(signal::Signal{InflectionDepression})
     city = signal.participant.city
-    study_center = signal.participant.study_center
 
     city == "Marburg" && return EMAIL_MARBURG_GENERAL
     city == "Münster" && return EMAIL_MÜNSTER_A04
@@ -517,9 +516,7 @@ function receiver(signal::Signal{InflectionDepression})
     if city == "Dresden"
         if "A06" in signal.participant.subprojects
             return EMAIL_DRESDEN_A06
-        elseif study_center == "Dresden (FAL)"
-            return EMAIL_DRESDEN_FAL
-        elseif study_center == "Dresden (UKD)"
+        else
             return EMAIL_DRESDEN_UKD
         end
     end
@@ -527,7 +524,6 @@ end
 
 function receiver(signal::Signal{InflectionMania})
     city = signal.participant.city
-    study_center = signal.participant.study_center
     subprojects = signal.participant.subprojects
 
     city == "Marburg" && return EMAIL_MARBURG_GENERAL
@@ -541,9 +537,7 @@ function receiver(signal::Signal{InflectionMania})
     elseif city == "Dresden"
         if "A06" in subprojects
             return EMAIL_DRESDEN_A06
-        elseif study_center == "Dresden (FAL)"
-            return EMAIL_DRESDEN_FAL
-        elseif study_center == "Dresden (UKD)"
+        else
             return EMAIL_DRESDEN_UKD
         end
     end
@@ -574,7 +568,7 @@ function receiver(::Signal{MissingExercise})
     return [EMAIL_MARBURG_B05, EMAIL_MÜNSTER_C03, EMAIL_DRESDEN_FAL]
 end
 
-function receiver(signal::Signal{<:Union{MissingIntenseSampling, SamplingProblem}})
+function receiver(signal::Signal{<:Union{MissingIntenseSampling,SamplingProblem}})
     group = signal.participant.group
     city = signal.participant.city
     study_center = signal.participant.study_center
@@ -615,8 +609,8 @@ function receiver(signal::Signal{MissingQuestionsProblems})
     city == "Dresden" && return EMAIL_DRESDEN_FAL
 end
 
-function receiver(signal::Signal{<:Union{SubstanceMore, SocialInteractionMore, Medication,
-        SleepDuration, SleepQuality, EarlyAwakening, Inpatient, SickLeave}})
+function receiver(signal::Signal{<:Union{SubstanceMore,SocialInteractionMore,Medication,
+    SleepDuration,SleepQuality,EarlyAwakening,Inpatient,SickLeave}})
     city = signal.participant.city
 
     city == "Marburg" && return EMAIL_MARBURG_A06
@@ -639,7 +633,7 @@ end
 signal_validation(::Signal) = nothing
 
 # special-case inflection signals
-function signal_validation(signal::Signal{<:Union{InflectionDepression, InflectionMania}})
+function signal_validation(signal::Signal{<:Union{InflectionDepression,InflectionMania}})
     length(signal.data) == 4 ? "valid" : "invalid"
 end
 
@@ -705,10 +699,10 @@ Workflow:
 Only non-`nothing` detection results are returned.
 """
 function detect_signals(
-        participants::Vector{Participant},
-        df::DataFrame;
-        signals = subtypes(AbstractSignal),
-        cutoff::Date = Date(now()) - Day(1)
+    participants::Vector{Participant},
+    df::DataFrame;
+    signals=subtypes(AbstractSignal),
+    cutoff::Date=Date(now()) - Day(1)
 )
     # restrict data to observations on or before the cutoff date
     df_data = subset(df, :Date => ByRow(x -> x <= cutoff))
